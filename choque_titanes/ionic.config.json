@@ -1,0 +1,7 @@
+{
+  "name": "choque_titanes",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular-standalone"
+}
