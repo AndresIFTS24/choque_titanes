@@ -1,13 +1,38 @@
 <ion-header [translucent]="true">
   <ion-toolbar>
-    <ion-title>mapa</ion-title>
+    <ion-title>
+      Mapa de jugadores
+    </ion-title>
   </ion-toolbar>
 </ion-header>
 
 <ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">mapa</ion-title>
-    </ion-toolbar>
-  </ion-header>
+  <!-- Boton para obtener ubicacion -->
+   <ion-button (click)="obtenerPosicionActual()">Obtener ubicacion del jugador</ion-button>
+   
+   <!-- Si existen latitud y longitud, las muestro-->
+   @if(latitud && longitud){
+    
+    <p>Latitud: {{latitud}}</p>
+    <p>Longitud: {{longitud}}</p>
+   
+  }
+   <!-- Si hay un error y no hay coordenadas, mostrar mensaje de error -->
+    @else if(error){
+    
+      <p class="ion-text-danger">{{error}}</p>
+
+    }
+    
+    @if(googleMapsUrl){
+    
+      <iframe [src]="googleMapsUrl |urlSegura" class="mapa-iframe"></iframe>
+      
+    }
+    
+    @else {
+
+      <p class="mensaje-espera">Aun no se ha obtenido la ubicacion</p>
+
+    }
 </ion-content>
