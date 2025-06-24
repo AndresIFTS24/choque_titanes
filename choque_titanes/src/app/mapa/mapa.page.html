@@ -8,10 +8,11 @@
 
 <ion-content [fullscreen]="true">
   <!-- Boton para obtener ubicacion -->
-   <ion-button (click)="obtenerPosicionActual()">Obtener ubicacion del jugador</ion-button>
-   
-   <!-- Si existen latitud y longitud, las muestro-->
-   @if(latitud && longitud){
+  <ion-button (click)="obtenerPosicionActual()">Obtener ubicacion del jugador</ion-button>
+  
+  <!-- Si existen latitud y longitud, las muestro-->
+
+    @if(latitud && longitud){
     
     <p>Latitud: {{latitud}}</p>
     <p>Longitud: {{longitud}}</p>
