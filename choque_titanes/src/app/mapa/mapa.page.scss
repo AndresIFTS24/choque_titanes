@@ -1,0 +1,73 @@
+:host {
+  --ion-background-color: #0f0f0f;
+  --ion-text-color: #f0f0f0;
+  display: block;
+  height: 100%;
+  font-family: 'Roboto', sans-serif;
+}
+
+ion-header {
+  --background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+  --color: #ffffff;
+
+  ion-toolbar {
+    --background: transparent;
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  ion-title {
+    font-weight: bold;
+    font-size: 1.5rem;
+    text-align: center;
+    letter-spacing: 0.5px;
+  }
+}
+
+ion-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;   // 👈 CENTRADO VERTICAL
+  text-align: center;        // 👈 CENTRADO HORIZONTAL
+  padding: 24px;
+  gap: 24px;  // 👈 MÁS ESPACIO ENTRE ELEMENTOS
+
+  ion-button {
+    --background: linear-gradient(135deg, #ff416c, #ff4b2b);
+    --color: #fff;
+    --border-radius: 14px;
+    padding: 0 28px;
+    height: 52px;
+    font-size: 1.05rem;
+    text-transform: none;
+    box-shadow: 0 4px 12px rgba(255, 75, 43, 0.3);
+  }
+
+  p {
+    margin: 0;
+    font-size: 1.05rem;
+    color: #ccc;
+    line-height: 1.6;
+
+    &.ion-text-danger {
+      color: #ff4b2b;
+      font-weight: bold;
+    }
+
+    &.mensaje-espera {
+      color: #aaa;
+      font-style: italic;
+    }
+  }
+
+  .mapa-iframe {
+    width: 100%;
+    max-width: 450px;
+    height: 300px;
+    border: 2px solid #ff416c;
+    border-radius: 16px;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5);
+    margin-top: 12px;
+  }
+}
