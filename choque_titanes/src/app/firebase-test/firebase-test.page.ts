@@ -51,7 +51,7 @@ export class FirebaseTestPage {
 
   setPerfil() {
     this.clearMessages();
-    this.db.setPerfil(this.uid, this.nick, this.icono, this.color)
+    this.db.setConfig(this.uid, this.nick, this.icono, this.color)
       .then(() => this.msgSuccess = 'Perfil guardado')
       .catch(e => this.msgError = e.message);
   }
