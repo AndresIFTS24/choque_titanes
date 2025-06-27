@@ -7,6 +7,7 @@ import { UrlSeguraPipe } from '../pipes/url-segura.pipe';
   selector: 'app-mapa',
   templateUrl: 'mapa.page.html',
   styleUrls: ['mapa.page.scss'],
+  standalone: true,
   imports: [UrlSeguraPipe, IonHeader, IonToolbar, IonTitle, IonContent, IonButton],
 })
 export class MapaPage {
