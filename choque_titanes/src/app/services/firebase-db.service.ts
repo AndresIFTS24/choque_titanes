@@ -8,6 +8,12 @@ import { JUGADOR, BALL } from './models';  // Ajustá la ruta según corresponda
 
 @Injectable({ providedIn: 'root' })
 export class FirebaseDbService {
+  //Se genera valor provisorio hasta que se mergee con el auth de fb, luego se reemplazará por el mismo
+  //esto es porque algunos métodos solo se deberían poder ejecutar para el usuario local
+  //este componente debe a futuro conectarse con el auth
+
+  authid: string = "PROVISORIO_AUTH_UID";
+
     // Jugador actual conectado (único)
   jugadorActual: JUGADOR | null = null; // null si no hay jugador local conectado
 
@@ -26,7 +32,7 @@ export class FirebaseDbService {
     //El mapa al iniciar debe llamar a este método, el cual le dara los usuarios y pelotas a dibujar
     //En adicional, fuera de este método, el mapa debe dibujar al jugador principal
     
-    this.setOnline("PONER_ID_AUTH_LOGIN");
+    this.setOnline();
     this.subscribeToOnlineUsers();
     this.subscribeToBalls();
 
@@ -35,17 +41,17 @@ export class FirebaseDbService {
   //            MANJEO DEL NODO ONLINE
   //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-  setOnline(uid: string) {    
-    const userRef = ref(this.db, `ONLINE/${uid}`);
+  setOnline() {    
+    const userRef = ref(this.db, `ONLINE/${this.authid}`);
     // Configura que al desconectarse, se borre el valor de online si lo tienen o lo tuviera
     onDisconnect(userRef).remove();
     // Luego devuelve la promesa de escritura de 1
     return set(userRef, 1);
   }
 
-  removeOnline(uid: string) {
+  removeOnline() {
     //Es útil si me quiero desconectar manualmente, ya que automáticamente esta el OnDisconect del servidor al que me suscribi al ponerme Online
-    return remove(ref(this.db, `ONLINE/${uid}`));
+    return remove(ref(this.db, `ONLINE/${this.authid}`));
   }
 
   subscribeToOnlineUsers() {
@@ -87,12 +93,15 @@ export class FirebaseDbService {
   //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
   obtenerPerfil(uid: string): Promise<JUGADOR | null> {
-  const perfilRef = ref(this.db, `PERFILES/${uid}`);
-    //Esto es llamado al Loguiar, para ver si existe el perfil,, con el auth_id del usuario
+    const perfilRef = ref(this.db, `PERFILES/${uid}`);
+    //Esto es llamado al Loguiar, para ver si existe el perfil, con el auth_id del usuario
+    this.authid = uid;//Provisorio
+
     return get(perfilRef)
       .then((snapshot) => {
         if (snapshot.exists()) {
           const datos: JUGADOR = snapshot.val();
+          this.jugadorActual = datos;
           console.log(`📥 Perfil obtenido de ${uid}:`, datos);
           return datos;
         } else {
@@ -106,27 +115,27 @@ export class FirebaseDbService {
       });
   }
 
-  setConfig(uid: string, nick: string, icono: number, color: string) {
+  setConfig(nick: string, icono: number, color: string) {
     //Debe llamarse cuando cambia la apariencia gráfica solo del propio jugador, o cuando se inicia por primera vez
     // o todas las veces que confirma y es correcto
-    return set(ref(this.db, `PERFILES/${uid}/seteo`), {
+    return set(ref(this.db, `PERFILES/${this.authid}/seteo`), {
       nick,
       icono,
       color
     });
   }
 
-  setPosicion(uid: string, lat: number, long: number) {
+  setPosicion(lat: number, long: number) {
     //Debe llamarse cuando cambia la coordenada solo del propio jugador
-    return set(ref(this.db, `PERFILES/${uid}/pos`), {
+    return set(ref(this.db, `PERFILES/${this.authid}/pos`), {
       lat,
       long
     });
   }
 
-  setPuntos(uid: string, puntos: number) {
+  setPuntos(puntos: number) {
     //Debe llamarse cuando cambian los puntos solo del propio jugador
-    return set(ref(this.db, `PERFILES/${uid}/puntos`), puntos);
+    return set(ref(this.db, `PERFILES/${this.authid}/puntos`), puntos);
   }
 
   cargarPerfil_Online(uid: string) {
