@@ -10,6 +10,10 @@ import { AppComponent } from './app/app.component';
 
 import { importProvidersFrom } from '@angular/core';
 import { IonicModule} from '@ionic/angular';
+import { provideDatabase, getDatabase } from '@angular/fire/database';
+
+
+
 
 bootstrapApplication(AppComponent, {
   providers: [
@@ -18,6 +22,10 @@ bootstrapApplication(AppComponent, {
     provideRouter(routes, withPreloading(PreloadAllModules)),
     importProvidersFrom(IonicModule.forRoot()),
     provideAuth(()=> getAuth()),
-    provideFirebaseApp(()=> initializeApp(environment.firebaseConfig))
+     // ✅ Firebase providers
+    provideFirebaseApp(()=> initializeApp(environment.firebaseConfig)),       
+    provideDatabase(() => getDatabase()),
   ],
 });
+
+
