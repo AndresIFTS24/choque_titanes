@@ -85,6 +85,27 @@ export class FirebaseDbService {
   //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
   //            MANJEO DEL NODO PERFIL
   //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+  obtenerPerfil(uid: string): Promise<JUGADOR | null> {
+  const perfilRef = ref(this.db, `PERFILES/${uid}`);
+    //Esto es llamado al Loguiar, para ver si existe el perfil,, con el auth_id del usuario
+    return get(perfilRef)
+      .then((snapshot) => {
+        if (snapshot.exists()) {
+          const datos: JUGADOR = snapshot.val();
+          console.log(`📥 Perfil obtenido de ${uid}:`, datos);
+          return datos;
+        } else {
+          console.warn(`⚠️ No se encontró perfil para ${uid}`);
+          return null;
+        }
+      })
+      .catch((error) => {
+        console.error(`❌ Error al obtener perfil de ${uid}:`, error);
+        return null;
+      });
+  }
+
   setConfig(uid: string, nick: string, icono: number, color: string) {
     //Debe llamarse cuando cambia la apariencia gráfica solo del propio jugador, o cuando se inicia por primera vez
     // o todas las veces que confirma y es correcto
