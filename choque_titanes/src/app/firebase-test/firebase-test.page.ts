@@ -65,7 +65,7 @@ export class FirebaseTestPage {
 
   crearBall() {
     this.clearMessages();
-    this.db.crearBall(this.uid, this.lat, this.long)
+    this.db.crearBall(this.lat, this.long)
       .then(() => this.msgSuccess = 'Ball creada')
       .catch(e => this.msgError = e.message);
   }

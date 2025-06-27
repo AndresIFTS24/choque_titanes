@@ -206,10 +206,10 @@ export class FirebaseDbService {
   //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
   //            MANJEO DEL NODO BALLS
   //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-  crearBall(uid: string, lat: number, long: number) {
+  crearBall(lat: number, long: number) {
     const ballRef = push(ref(this.db, 'BALLS'));
     return set(ballRef, {
-      owner: uid,
+      owner: this.authid,
       lat,
       long
     });
