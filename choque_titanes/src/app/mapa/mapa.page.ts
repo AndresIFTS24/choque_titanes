@@ -9,7 +9,9 @@ import { JugadoresComponent } from "../jugadores/jugadores.component";
   standalone: true,
   templateUrl: 'mapa.page.html',
   styleUrls: ['mapa.page.scss'],
+
   imports: [UrlSeguraPipe, IonHeader, IonToolbar, IonTitle, IonContent, IonButton, JugadoresComponent],
+
 })
 export class MapaPage {
   //Variables que vamos a utilizar
