@@ -13,6 +13,7 @@
   },
   "private": true,
   "dependencies": {
+<<<<<<< HEAD
     "@angular/animations": "^20.0.5",
     "@angular/common": "^20.0.5",
     "@angular/compiler": "^20.0.5",
@@ -22,6 +23,17 @@
     "@angular/platform-browser": "^20.0.5",
     "@angular/platform-browser-dynamic": "^20.0.5",
     "@angular/router": "^20.0.5",
+=======
+    "@angular/animations": "^19.0.0",
+    "@angular/common": "^19.0.0",
+    "@angular/compiler": "^19.0.0",
+    "@angular/core": "^19.0.0",
+    "@angular/fire": "^19.2.0",
+    "@angular/forms": "^19.0.0",
+    "@angular/platform-browser": "^19.0.0",
+    "@angular/platform-browser-dynamic": "^19.0.0",
+    "@angular/router": "^19.0.0",
+>>>>>>> origin/develop
     "@capacitor/android": "7.4.0",
     "@capacitor/app": "7.0.1",
     "@capacitor/core": "7.4.0",
@@ -31,8 +43,12 @@
     "@capacitor/local-notifications": "^7.0.1",
     "@capacitor/status-bar": "7.0.1",
     "@ionic/angular": "^8.0.0",
+<<<<<<< HEAD
     "@types/leaflet": "^1.9.18",
     "firebase": "^11.9.1",
+=======
+    "firebase": "^11.9.0",
+>>>>>>> origin/develop
     "ionicons": "^7.0.0",
     "leaflet": "^1.9.4",
     "rxjs": "~7.8.0",

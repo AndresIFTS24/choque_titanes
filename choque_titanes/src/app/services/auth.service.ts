@@ -4,6 +4,11 @@ import { createUserWithEmailAndPassword, onAuthStateChanged,sendEmailVerificatio
 import { Auth } from '@angular/fire/auth';
 import { FirebaseDbService } from './firebase-db.service';
 import { FirebaseApp } from '@angular/fire/app';
+<<<<<<< HEAD
+=======
+import { ModalController } from '@ionic/angular';
+import { JugadoresComponent } from '../jugadores/jugadores.component';
+>>>>>>> origin/develop
 
 @Injectable({
   providedIn: 'root'
@@ -12,14 +17,35 @@ export class AuthService {
 
   private usuarioActual: User | null = null;
 
+<<<<<<< HEAD
   constructor(private auth: Auth, private router: Router, private firebaseDb:FirebaseDbService) {
     onAuthStateChanged(this.auth, (usuario) => this.usuarioActual= usuario) // escucha cualquier cambio en el estado de autenticacion
   }
+=======
+  constructor(private auth: Auth, private router: Router, private firebaseDb:FirebaseDbService,private modalCtrl: ModalController) {
+    onAuthStateChanged(this.auth, (usuario) => this.usuarioActual= usuario) // escucha cualquier cambio en el estado de autenticacion
+  }
+
+  // Método para abrir el modal de configuración de perfil
+  async abrirModalConfiguracionPerfil() {
+    const modal = await this.modalCtrl.create({
+      component: JugadoresComponent,
+      backdropDismiss: false, //El modal no se puede cerrar tocando afuera. Ideal para forzar al usuario a completar su perfil antes de seguir
+      breakpoints: [0, 0.5, 0.9],
+      initialBreakpoint: 0.9 //Al abrirse, el modal ocupa el 90% de la pantalla.
+    });
+    await modal.present();
+  }
+>>>>>>> origin/develop
   async registrar(email: string, password:string){
     const cred = await createUserWithEmailAndPassword(this.auth, email, password);
     await sendEmailVerification(cred.user);
     alert('Verifica tu correo electrónico antes de iniciar sesión');
+<<<<<<< HEAD
     //Abrir modal para config
+=======
+    
+>>>>>>> origin/develop
   }
      //metodo Iniciar sesion
   async iniciarSesion(email: string, password: string) {
@@ -35,6 +61,10 @@ export class AuthService {
       this.router.navigate(['/mapa']);
     } else {
       // Abrir modal para configurar perfil
+<<<<<<< HEAD
+=======
+      await this.abrirModalConfiguracionPerfil()
+>>>>>>> origin/develop
     }
     
   }
@@ -47,4 +77,8 @@ export class AuthService {
   estaLogueado():boolean {
     return !!this.usuarioActual && this.usuarioActual.emailVerified
   }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> origin/develop

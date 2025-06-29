@@ -19,4 +19,8 @@ export interface BALL {
   OWNER: string; //UID que genero la bola
   lat: number;
   long: number;
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> origin/develop

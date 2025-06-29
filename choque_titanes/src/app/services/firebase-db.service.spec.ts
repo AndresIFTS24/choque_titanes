@@ -13,4 +13,8 @@ describe('FirebaseDbService', () => {
   it('should be created', () => {
     expect(service).toBeTruthy();
   });
+<<<<<<< HEAD
 });
+=======
+});
+>>>>>>> origin/develop

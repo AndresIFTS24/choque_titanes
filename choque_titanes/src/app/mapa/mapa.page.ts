@@ -41,11 +41,15 @@ export class MapaPage implements OnInit, OnDestroy {
   async actualizarPosicion() {
     try {
       const posicion = await Geolocation.getCurrentPosition({ enableHighAccuracy: true });
+      const permisoNotificacion = await this.perdirPerminoNotificaciones();
       this.latitud = posicion.coords.latitude;
       this.longitud = posicion.coords.longitude;
       const url = `https://www.google.com/maps?q=${this.latitud},${this.longitud}&output=embed`;
       this.googleMapsUrl = url;
       this.error = null;
+      if (permisoNotificacion && this.latitud && this.longitud) {
+        await this.mostrarNotificacion('Ubicacion actulizada', 'Latitud: ${this.latitud.toFixed(5), Longitud: ${this.longitud.toFixed(5)}}')
+      }
     } catch (err: any) {
       this.error = 'Error al obtener la ubicación: ' + err.message;
     }
@@ -54,6 +58,7 @@ export class MapaPage implements OnInit, OnDestroy {
   iniciarActualizacionContinua() {
     this.actualizarPosicion(); // Obtener al instante
     this.intervaloId = setInterval(() => this.actualizarPosicion(), 500); // cada medio segundo
+    
   }
 
   detenerActualizacion() {
