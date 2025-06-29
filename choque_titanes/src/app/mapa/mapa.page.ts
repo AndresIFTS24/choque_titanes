@@ -1,68 +1,58 @@
-import { Component } from '@angular/core';
-import { IonHeader, IonToolbar, IonTitle, IonContent, IonButton } from '@ionic/angular/standalone';
-import { Geolocation, PermissionStatus } from '@capacitor/geolocation'
-import { UrlSeguraPipe } from '../pipes/url-segura.pipe'; 
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { IonicModule } from '@ionic/angular';
+import { Geolocation } from '@capacitor/geolocation';
+import { DomSanitizer } from '@angular/platform-browser';
+import { UrlSeguraPipe } from '../pipes/url-segura.pipe';
 
 @Component({
+  standalone: true,
   selector: 'app-mapa',
   templateUrl: 'mapa.page.html',
   styleUrls: ['mapa.page.scss'],
-  imports: [UrlSeguraPipe, IonHeader, IonToolbar, IonTitle, IonContent, IonButton],
+  imports: [IonicModule, CommonModule, UrlSeguraPipe]
 })
-export class MapaPage {
-  //Variables que vamos a utilizar
-  latitud?: number;
-  longitud?: number;
-  error?: string;
+export class MapaPage implements OnInit, OnDestroy {
 
-  private async verificarPermisosDeUbicacion(): Promise<boolean> {
-    //Consultar los permisos actuales
-    const permisos = await Geolocation.checkPermissions();
+  latitud: number | null = null;
+  longitud: number | null = null;
+  error: string | null = null;
+  googleMapsUrl: string | null = null;
 
-    //Si está concedido devuelve true
-    if (permisos.location === 'granted') return true;
+  private intervaloId: any;
 
-    //Si no, pide permiso al usuario
-    const solicitud: PermissionStatus = await Geolocation.requestPermissions();
+  constructor(private sanitizer: DomSanitizer) { }
 
-    return solicitud.location === 'granted';
+  ngOnInit() {
+    this.iniciarActualizacionContinua();
   }
 
-  async obtenerPosicionActual() {
+  ngOnDestroy() {
+    this.detenerActualizacion();
+  }
+
+  async actualizarPosicion() {
     try {
-      //Primero chequeamos o solicitamos permisos
-      const tienePermiso = await this.verificarPermisosDeUbicacion();
-
-      //Si no tenemos permiso, mostramos error
-      if (!tienePermiso) {
-        this.error = 'Permiso de ubicacion denegado';
-        this.latitud = undefined;
-        this.longitud = undefined;
-        return;
-      }
-
-      //Si tenemos permiso, pedimos la ubicacion
-
-      const posicion = await Geolocation.getCurrentPosition();
-
-      //Guardar la latitud y longitud para mostrarla en pantalla
-
+      const posicion = await Geolocation.getCurrentPosition({ enableHighAccuracy: true });
       this.latitud = posicion.coords.latitude;
       this.longitud = posicion.coords.longitude;
-
-      //Borrar mensaje de error
-
-      this.error = undefined;
-
-
-    } catch (err) {
-      //Si ocurre algun error (permiso, hardware, etc etc), muestro mensaje
-      this.error = "Error obteniendo ubicacion: " + (err as any).message
+      const url = `https://www.google.com/maps?q=${this.latitud},${this.longitud}&output=embed`;
+      this.googleMapsUrl = url;
+      this.error = null;
+    } catch (err: any) {
+      this.error = 'Error al obtener la ubicación: ' + err.message;
     }
   }
 
-  get googleMapsUrl(): string | null {
-    return this.latitud !== undefined && this.longitud !== undefined ? `https://www.google.com/maps?q=${this.latitud},${this.longitud}&hl=es&z=15&output=embed` : null;
+  iniciarActualizacionContinua() {
+    this.actualizarPosicion(); // Obtener al instante
+    this.intervaloId = setInterval(() => this.actualizarPosicion(), 500); // cada medio segundo
   }
-  
+
+  detenerActualizacion() {
+    if (this.intervaloId) {
+      clearInterval(this.intervaloId);
+      this.intervaloId = null;
+    }
+  }
 }

@@ -1,73 +1,76 @@
-:host {
-  --ion-background-color: #0f0f0f;
-  --ion-text-color: #f0f0f0;
-  display: block;
-  height: 100%;
-  font-family: 'Roboto', sans-serif;
-}
-
-ion-header {
-  --background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
-  --color: #ffffff;
-
-  ion-toolbar {
-    --background: transparent;
-    backdrop-filter: blur(8px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  }
-
-  ion-title {
-    font-weight: bold;
-    font-size: 1.5rem;
-    text-align: center;
-    letter-spacing: 0.5px;
-  }
-}
+/* mapa.page.scss */
 
 ion-content {
+  --background: #f5f7fa; /* fondo suave gris claro */
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;   // 👈 CENTRADO VERTICAL
-  text-align: center;        // 👈 CENTRADO HORIZONTAL
-  padding: 24px;
-  gap: 24px;  // 👈 MÁS ESPACIO ENTRE ELEMENTOS
+  padding: 20px;
+  gap: 20px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
 
-  ion-button {
-    --background: linear-gradient(135deg, #ff416c, #ff4b2b);
-    --color: #fff;
-    --border-radius: 14px;
-    padding: 0 28px;
-    height: 52px;
-    font-size: 1.05rem;
-    text-transform: none;
-    box-shadow: 0 4px 12px rgba(255, 75, 43, 0.3);
-  }
+/* Botones estilizados */
+ion-button {
+  --background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+  --background-activated: linear-gradient(135deg, #2575fc 0%, #6a11cb 100%);
+  --color: white;
+  --box-shadow: 0 4px 15px rgba(37, 117, 252, 0.4);
+  font-weight: 600;
+  border-radius: 12px;
+  font-size: 1.1rem;
+  transition: transform 0.2s ease;
+  width: 100%;
+  max-width: 400px;
+}
 
-  p {
-    margin: 0;
-    font-size: 1.05rem;
-    color: #ccc;
-    line-height: 1.6;
+ion-button:hover {
+  transform: scale(1.05);
+  --box-shadow: 0 6px 20px rgba(37, 117, 252, 0.6);
+}
 
-    &.ion-text-danger {
-      color: #ff4b2b;
-      font-weight: bold;
-    }
+/* Contenedor de coordenadas */
+div {
+  background: white;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  border-radius: 12px;
+  padding: 20px;
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+  color: #333;
+  font-size: 1.2rem;
+}
 
-    &.mensaje-espera {
-      color: #aaa;
-      font-style: italic;
-    }
-  }
+/* Texto de error */
+.ion-text-danger {
+  font-weight: 700;
+  color: #e03e3e;
+  background: #ffe6e6;
+  padding: 15px;
+  border-radius: 10px;
+  box-shadow: 0 1px 8px rgba(224, 62, 62, 0.3);
+}
 
-  .mapa-iframe {
-    width: 100%;
-    max-width: 450px;
-    height: 300px;
-    border: 2px solid #ff416c;
-    border-radius: 16px;
-    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5);
-    margin-top: 12px;
-  }
+/* Mapa iframe */
+.mapa-iframe {
+  width: 100vw;
+  max-width: 100%;
+  height: 50vh;
+  border: none;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(37, 117, 252, 0.3);
+}
+
+.mapa-iframe:hover {
+  box-shadow: 0 15px 40px rgba(37, 117, 252, 0.6);
+}
+
+/* Mensaje esperando */
+.mensaje-espera {
+  color: #555;
+  font-style: italic;
+  font-size: 1rem;
+  text-align: center;
+  margin-top: 10px;
 }
