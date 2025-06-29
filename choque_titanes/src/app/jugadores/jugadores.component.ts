@@ -4,16 +4,14 @@ import { IonicModule, ModalController } from '@ionic/angular';
 import { IonModal } from '@ionic/angular/standalone';
 import { OverlayEventDetail } from '@ionic/core/components';
 
+
 @Component({
   selector: 'app-jugadores',
-  imports:[IonicModule,
-    FormsModule,
-  ],
-  standalone: true,
   templateUrl: './jugadores.component.html',
   styleUrls: ['./jugadores.component.scss'],
 })
 export class JugadoresComponent  implements OnInit {
+
 
   name!: string;
   // imagenUno: string = 'https://images.piclumen.com/normal/20250628/01/926bffa049fa4929b6dbc7dd630ba79e.webp';
@@ -99,4 +97,5 @@ obtenerUrlSeleccionada(): any {
       this.message = `Hello, ${event.detail.data}!`;
     }
   }
+
 }

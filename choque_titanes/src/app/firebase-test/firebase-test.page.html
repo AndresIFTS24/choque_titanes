@@ -1,0 +1,53 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Pruebas Firebase</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <ion-item>
+    <ion-label position="floating">UID</ion-label>
+    <ion-input [(ngModel)]="uid"></ion-input>
+  </ion-item>
+
+  <ion-item>
+    <ion-label position="floating">Latitud</ion-label>
+    <ion-input type="number" [(ngModel)]="lat"></ion-input>
+  </ion-item>
+
+  <ion-item>
+    <ion-label position="floating">Longitud</ion-label>
+    <ion-input type="number" [(ngModel)]="long"></ion-input>
+  </ion-item>
+
+  <ion-item>
+    <ion-label position="floating">Nickname</ion-label>
+    <ion-input [(ngModel)]="nick"></ion-input>
+  </ion-item>
+
+  <ion-item>
+    <ion-label position="floating">Ícono (Número)</ion-label>
+    <ion-input type="number" [(ngModel)]="icono"></ion-input>
+  </ion-item>
+
+  <ion-item>
+    <ion-label position="floating">Color (Hex)</ion-label>
+    <ion-input [(ngModel)]="color"></ion-input>
+  </ion-item>
+
+  <ion-item>
+    <ion-label position="floating">Ball ID (para eliminar)</ion-label>
+    <ion-input [(ngModel)]="ballId"></ion-input>
+  </ion-item>
+
+  <ion-button expand="block" (click)="setOnline()">Set Online</ion-button>
+  <ion-button expand="block" (click)="removeOnline()">Remove Online</ion-button>
+  <ion-button expand="block" (click)="setPosicion()">Set Posición</ion-button>
+  <ion-button expand="block" (click)="setPerfil()">Crear / Actualizar Perfil</ion-button>
+  <ion-button expand="block" (click)="setPuntos()">Set Puntos</ion-button>
+  <ion-button expand="block" (click)="crearBall()">Crear Ball</ion-button>
+  <ion-button expand="block" (click)="eliminarBall()">Eliminar Ball</ion-button>
+
+  <ion-text color="success" *ngIf="msgSuccess">{{ msgSuccess }}</ion-text>
+  <ion-text color="danger" *ngIf="msgError">{{ msgError }}</ion-text>
+</ion-content>
