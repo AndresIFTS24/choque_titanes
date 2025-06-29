@@ -4,6 +4,7 @@ import { IonicModule } from '@ionic/angular';
 import { Geolocation } from '@capacitor/geolocation';
 import { DomSanitizer } from '@angular/platform-browser';
 import { UrlSeguraPipe } from '../pipes/url-segura.pipe';
+import { FirebaseDbService } from '../services/firebase-db.service';
 
 @Component({
   standalone: true,
