@@ -32,7 +32,7 @@ export class AuthService {
     const cred = await createUserWithEmailAndPassword(this.auth, email, password);
     await sendEmailVerification(cred.user);
     alert('Verifica tu correo electrónico antes de iniciar sesión');
-    await this.abrirModalConfiguracionPerfil();
+    
   }
      //metodo Iniciar sesion
   async iniciarSesion(email: string, password: string) {
