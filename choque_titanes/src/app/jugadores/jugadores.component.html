@@ -1,0 +1,102 @@
+<ion-card>
+  <ion-card-header>
+    <ion-card-title>Lista de jugadores</ion-card-title>
+  </ion-card-header>
+  <ion-card-content>
+    <ion-button id="open-modal" expand="block">Personalizar jugador</ion-button>
+    <p>{{ message }}</p>
+
+    <ion-modal trigger="open-modal" (willDismiss)="onWillDismiss($event)">
+      <ng-template>
+        <ion-header>
+          <ion-toolbar>
+            <ion-buttons slot="start">
+              <ion-button (click)="cancel()">Cancelar</ion-button>
+            </ion-buttons>
+            <ion-title>Configuración</ion-title>
+            <ion-buttons slot="end">
+              <ion-button class="boton-personalizado" (click)="confirm()" [strong]="true">Confirmar</ion-button>
+            </ion-buttons>
+          </ion-toolbar>
+        </ion-header>
+
+        <ion-content class="ion-padding">
+          <ion-item>
+            <ion-input
+              label="Ingresa su nickname"
+              labelPlacement="stacked"
+              type="text"
+              placeholder="Nickname"
+              [(ngModel)]="name"
+            ></ion-input>
+          </ion-item>
+
+<ion-item>
+  <ion-label>Color</ion-label>
+  <ion-select [(ngModel)]="opcionSeleccionada" placeholder="Seleccione un color">
+    <ion-select-option [value]="'red'" class="opcion-red">Red</ion-select-option>
+    <ion-select-option [value]="'blue'" class="opcion-blue">Blue</ion-select-option>
+    <ion-select-option [value]="'green'" class="opcion-green">Green</ion-select-option>
+  </ion-select>
+</ion-item>
+
+<ion-radio-group [(ngModel)]="avatarSeleccionado">
+<div class="mi-contenedor">
+  <ion-chip>
+  <ion-avatar>
+    <img alt="Silhouette of a person's head" [src]="imagenUno" />
+  </ion-avatar>
+  <ion-label>Avatar 1</ion-label>
+</ion-chip>
+  <ion-radio [value]="'avatar1'"></ion-radio>
+
+</div>
+
+<div class="mi-contenedor">
+<ion-chip>
+  <ion-avatar>
+    <img alt="person's head" [src]="imagenDos" />
+  </ion-avatar>
+  <ion-label>Avatar 2</ion-label>
+</ion-chip>
+  <ion-radio [value]="'avatar2'"></ion-radio>
+</div>
+
+<div class="mi-contenedor">
+<ion-chip>
+  <ion-avatar>
+    <img alt="Silhouette" [src]="imagenTres" />
+  </ion-avatar>
+  <ion-label>Avatar 3</ion-label>
+</ion-chip>
+  <ion-radio [value]="'avatar3'"></ion-radio>
+</div>
+</ion-radio-group>
+        </ion-content>
+      </ng-template>
+    </ion-modal>
+<section class="ion-padding">
+  @if (arrayJugadores.length === 0) {
+    <ion-card color="light">
+      <ion-card-content class="ion-text-center">
+        <p>No hay jugadores registrados</p>
+      </ion-card-content>
+    </ion-card>
+  }
+
+  @for (pj of arrayJugadores; track $index) {
+    <ion-card>
+      <ion-item>
+        <ion-avatar slot="start">
+          <img [src]="pj.avatarUrl" alt="Avatar" />
+        </ion-avatar>
+        <ion-label>
+          <h2>{{ pj.nombre }}</h2>
+          <p>Color : {{ pj.color }}</p>
+        </ion-label>
+      </ion-item>
+    </ion-card>
+  }
+</section>
+  </ion-card-content>
+</ion-card>

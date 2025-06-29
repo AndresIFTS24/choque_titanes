@@ -1,13 +1,15 @@
 import { Component } from '@angular/core';
 import { IonHeader, IonToolbar, IonTitle, IonContent, IonButton } from '@ionic/angular/standalone';
 import { Geolocation, PermissionStatus } from '@capacitor/geolocation'
-import { UrlSeguraPipe } from '../pipes/url-segura.pipe'; 
+import { UrlSeguraPipe } from '../pipes/url-segura.pipe';
+import { JugadoresComponent } from "../jugadores/jugadores.component"; 
 
 @Component({
   selector: 'app-mapa',
+  standalone: true,
   templateUrl: 'mapa.page.html',
   styleUrls: ['mapa.page.scss'],
-  imports: [UrlSeguraPipe, IonHeader, IonToolbar, IonTitle, IonContent, IonButton],
+  imports: [UrlSeguraPipe, IonHeader, IonToolbar, IonTitle, IonContent, IonButton, JugadoresComponent],
 })
 export class MapaPage {
   //Variables que vamos a utilizar
