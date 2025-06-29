@@ -19,7 +19,7 @@ export const routes: Routes = [
 
   {
     path: 'mapa',
-    loadComponent: () => import('./mapa/mapa.page').then((m) => m.MapaPage),
+    loadComponent: () => import('./mapa/mapa.page').then((m) => m.MapaPage), canActivate: [authGuard]
   },
   
   {
