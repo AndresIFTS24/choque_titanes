@@ -11,8 +11,5 @@ import { AuthService } from '../services/auth.service';
 export class HomePage {
   constructor(private auth: AuthService) {}
 
-  cerrarSesion(){
-    this.auth.cerrarSesion();
   
-  }
 }
