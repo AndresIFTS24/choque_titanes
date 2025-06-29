@@ -6,34 +6,42 @@
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true">
-  <!-- Boton para obtener ubicacion -->
-  <ion-button (click)="obtenerPosicionActual()">Obtener ubicacion del jugador</ion-button>
-  
-  <!-- Si existen latitud y longitud, las muestro-->
+<ion-content [fullscreen]="true" class="ion-padding">
 
-    @if(latitud && longitud){
-    
-    <p>Latitud: {{latitud}}</p>
-    <p>Longitud: {{longitud}}</p>
-   
-  }
-   <!-- Si hay un error y no hay coordenadas, mostrar mensaje de error -->
-    @else if(error){
-    
-      <p class="ion-text-danger">{{error}}</p>
+  <!-- Botones de control -->
+  <ion-button color="primary" expand="block" (click)="iniciarActualizacionContinua()">
+    Reanudar
+  </ion-button>
 
-    }
-    
-    @if(googleMapsUrl){
-    
-      <iframe [src]="googleMapsUrl |urlSegura" class="mapa-iframe"></iframe>
-      
-    }
-    
-    @else {
+  <ion-button color="danger" expand="block" (click)="detenerActualizacion()">
+    Pausa
+  </ion-button>
 
-      <p class="mensaje-espera">Aun no se ha obtenido la ubicacion</p>
+  <!-- Coordenadas -->
+  <div *ngIf="latitud !== null && longitud !== null">
+    <p>Latitud: {{ latitud }}</p>
+    <p>Longitud: {{ longitud }}</p>
+  </div>
 
-    }
+  <!-- Error -->
+  <div *ngIf="(latitud === null || longitud === null) && error">
+    <p class="ion-text-danger">{{ error }}</p>
+  </div>
+
+  <!-- Mapa -->
+  <div *ngIf="googleMapsUrl; else mensajeEsperando">
+    <iframe
+      [src]="googleMapsUrl | urlSegura"
+      class="mapa-iframe"
+      width="100%"
+      height="400"
+      frameborder="0"
+      allowfullscreen
+    ></iframe>
+  </div>
+
+  <ng-template #mensajeEsperando>
+    <p class="mensaje-espera">Aún no se ha obtenido la ubicación</p>
+  </ng-template>
+
 </ion-content>
