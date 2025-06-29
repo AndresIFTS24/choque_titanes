@@ -22,9 +22,14 @@ export class MapaPage implements OnInit, OnDestroy {
 
   private intervaloId: any;
 
-  constructor(private sanitizer: DomSanitizer) { }
+  constructor(
+    private sanitizer: DomSanitizer, 
+    private firebaseService: FirebaseDbService)
+  
+   { }
 
   ngOnInit() {
+    this.firebaseService.Conectar_al_Mapa();
     this.iniciarActualizacionContinua();
   }
 
