@@ -2,9 +2,10 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonicModule } from '@ionic/angular';
 import { Geolocation } from '@capacitor/geolocation';
-import { DomSanitizer } from '@angular/platform-browser';
+import { DomSanitizer, Title } from '@angular/platform-browser';
 import { UrlSeguraPipe } from '../pipes/url-segura.pipe';
 import { FirebaseDbService } from '../services/firebase-db.service';
+import {LocalNotifications} from '@capacitor/local-notifications'
 
 @Component({
   standalone: true,
@@ -61,4 +62,29 @@ export class MapaPage implements OnInit, OnDestroy {
       this.intervaloId = null;
     }
   }
+
+  async perdirPerminoNotificaciones () {
+    const permiso = await LocalNotifications.requestPermissions();
+    if (permiso.display !=='granted') {
+      alert ('No se otorgaron los permisos para las notificaciones') 
+      return false
+    }
+    return true
+  }
+
+  async mostrarNotificacion(titulo:string, cuerpo:string) { 
+    await LocalNotifications.schedule({
+      notifications: [
+        {
+          title:titulo,
+          body:cuerpo,
+          id: new Date().getTime(),
+          schedule: {at: new Date(Date.now() + 2000)}, 
+          actionTypeId: '',
+          extra: null,
+        }
+      ]
+    })
+  }
+
 }
