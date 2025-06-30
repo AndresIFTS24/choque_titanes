@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Database, ref, set, get,  update, remove, push,onDisconnect, onChildAdded, onChildRemoved, onChildChanged } from '@angular/fire/database';
 import { JUGADOR, BALL } from './models';  // Ajustá la ruta según corresponda
-
+import { MapaBridgeService } from './mapa-bridge.service';//No se puede llamar a una página directo desde una suscripción, se debe pibotear en un servicio
 
 
 
@@ -23,7 +23,7 @@ export class FirebaseDbService {
   // Lista de balls en el mapa
   listaBalls: Map<string, BALL> = new Map();
 
-  constructor(private db: Database) {}
+  constructor(private db: Database, private mapaBridge: MapaBridgeService) {}
   //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
   //            GENERAL
   //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -81,6 +81,8 @@ export class FirebaseDbService {
       if (this.listaJugadores.has(uid)) {
         this.listaJugadores.delete(uid);
         //Aca debe borrar gráficamente si existe al jugador online que se desconecto del mapa
+        this.mapaBridge.borrarJugador?.(uid);
+
         //!!Tengo que ver como borrar la suscripción de ese usuario desconectado, no me debería afectar, salvo que se reconecte que duplicaría la suscripcion
 
         console.log(`🔴 Usuario desconectado eliminado de listaJugadores: ${uid}`);
@@ -148,6 +150,8 @@ export class FirebaseDbService {
           this.listaJugadores.set(uid, datos);
           console.log(`✅ Perfil de ${uid} cargado:`, datos);
           //Aca debe crear por primera vez al Jugador online visualmente
+
+          this.mapaBridge.crear_jugador?.(uid, datos);
           this.subscribeToPerfilChanges(uid);//Con la primera captura de datos, me suscribo a los cambios de los mismos
           
 
@@ -178,18 +182,21 @@ export class FirebaseDbService {
         case 'SETEO':
           jugador.SETEO = nuevoValor;
           console.log(`SETEO actualizado para ${uid}:`, nuevoValor);
+          this.mapaBridge.modjugador_seteo?.(uid,nuevoValor);
           //Llamar a modificar visualmente al jugador online
           break;
 
         case 'POS':
           jugador.POS = nuevoValor;
           console.log(`POS actualizado para ${uid}:`, nuevoValor);
+          this.mapaBridge.modjugador_POS?.(uid,nuevoValor);
           //Llamar a modificar POS del mapa del jugador online
           break;
 
         case 'PUNTOS':
           jugador.PUNTOS = nuevoValor;
           console.log(`PUNTOS actualizado para ${uid}:`, nuevoValor);
+          this.mapaBridge.modjugador_puntos?.(uid,nuevoValor);
           //Que hacemos con los puntos de los jugadores conectados? los ponemos tambien en el maapa alado del numbre?
           break;
 
@@ -230,6 +237,7 @@ export class FirebaseDbService {
       if (ballData && ballData.lat !== undefined && ballData.long !== undefined && ballData.OWNER) {
         this.listaBalls.set(id, ballData);
         console.log(`🟢 BALL agregada [${id}]:`, ballData);
+        this.mapaBridge.crearBall?.(id,ballData);
         //Aca debería agregar la pelota gráficamente al mapa
       } else {
         console.warn(`⚠️ BALL inválida ignorada:`, ballData);
@@ -244,6 +252,7 @@ export class FirebaseDbService {
       if (this.listaBalls.has(id)) {
 
         //Aca debería borrar gráficamente la pelota del mapa
+        this.mapaBridge.borrarBall?.(id);
         this.listaBalls.delete(id);
         console.log(`🔴 BALL eliminada [${id}]`);
       }

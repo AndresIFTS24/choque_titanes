@@ -1,0 +1,19 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Testsuscrip - Prueba de suscripciones</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <h2>Jugadores en el mapa:</h2>
+  <div *ngFor="let jugador of jugadoresEnMapa.values()">
+    <div [style.color]="jugador.SETEO.Color">
+      👤 {{ jugador.SETEO.Nick }} - 📍 ({{ jugador.POS.lat }}, {{ jugador.POS.long }}) - ⭐ {{ jugador.PUNTOS }}
+    </div>
+  </div>
+
+  <h2>Balls en el mapa:</h2>
+  <div *ngFor="let ball of ballsEnMapa.values()">
+    🎯 Ball de {{ ball.OWNER }} - ({{ ball.lat }}, {{ ball.long }})
+  </div>
+</ion-content>

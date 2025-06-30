@@ -26,4 +26,9 @@ export const routes: Routes = [
     path: 'fb',
     loadComponent: () => import('./firebase-test/firebase-test.page').then(m => m.FirebaseTestPage),
   },
+  {
+  path: 'ts',
+  loadComponent: () => import('./testsuscrip/testsuscrip.page').then(m => m.TestsuscripPage),
+}
+
 ];
