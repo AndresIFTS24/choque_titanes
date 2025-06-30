@@ -3,14 +3,26 @@ import {
   OnInit,
   OnDestroy,
   AfterViewInit,
-  NgZone // Ya lo estás usando, excelente
+  NgZone
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonicModule } from '@ionic/angular';
 import { Geolocation } from '@capacitor/geolocation';
 import { FirebaseDbService } from '../services/firebase-db.service';
 import { BALL } from '../services/models';
-import * as L from 'leaflet';
+
+// Importaciones de OpenLayers
+import { Map, View } from 'ol';
+import TileLayer from 'ol/layer/Tile';
+import OSM from 'ol/source/OSM';
+import Feature from 'ol/Feature';
+import Point from 'ol/geom/Point';
+import { Icon, Style } from 'ol/style';
+import VectorSource from 'ol/source/Vector';
+import VectorLayer from 'ol/layer/Vector';
+import { fromLonLat } from 'ol/proj';
+import { Geometry } from 'ol/geom';
+import { Subscription } from 'rxjs'; // Importamos Subscription
 
 @Component({
   standalone: true,
@@ -24,46 +36,47 @@ export class MapaPage implements OnInit, OnDestroy, AfterViewInit {
   longitud: number | null = null;
   error: string | null = null;
   private intervaloId: any;
-  private mapa!: L.Map;
-  private ballsMarkers: Map<string, L.Marker> = new Map();
-  private jugadorMarker?: L.Marker;
+
+  // Propiedades de OpenLayers
+  private mapa!: Map;
+  private vectorSource!: VectorSource<Feature<Geometry>>;
+  private jugadorFeature!: Feature<Point>;
+  private ballsFeatures: globalThis.Map<string, Feature<Point>> = new globalThis.Map<string, Feature<Point>>();
+  private ballsSubscription!: Subscription; // Para gestionar la suscripción de las bolas
 
   constructor(
-    // DomSanitizer no es necesario si solo usas rutas directas de assets
-    // private sanitizer: DomSanitizer,
     private firebaseService: FirebaseDbService,
-    private ngZone: NgZone // Muy importante para Leaflet dentro de Angular
+    private ngZone: NgZone
   ) {}
 
   ngOnInit() {
+    // Solo conectamos al servicio Firebase aquí.
+    // La suscripción a las bolas se hará una vez que el mapa esté listo.
     this.firebaseService.Conectar_al_Mapa();
-    // Suscribirse a las bolas aquí para asegurar que las actualizaciones lleguen al mapa
-    this.firebaseService.obsBalls.subscribe((bolas: Map<string, BALL>) => {
-      this.ngZone.run(() => { // Asegura que los cambios se detecten en Angular
-        this.actualizarBolasEnMapa(bolas);
-      });
-    });
   }
 
-  // ngAfterViewInit es el hook donde el DOM del componente está completamente inicializado.
   ngAfterViewInit() {
-    // Es posible que el DOM necesite un microtask o un frame para que sus dimensiones se asienten
-    // completamente después de ngAfterViewInit, especialmente en Ionic.
-    // Usaremos un setTimeout sin zona de Angular para esto.
     this.ngZone.runOutsideAngular(() => {
-        setTimeout(() => {
-            this.obtenerUbicacionYCrearMapa();
-        }, 100); // Pequeño retraso para dar tiempo al DOM a estabilizarse
+      // Usamos un setTimeout para asegurar que el DOM esté completamente listo,
+      // aunque ya estamos en ngAfterViewInit.
+      setTimeout(() => {
+        this.obtenerUbicacionYCrearMapa();
+      }, 100);
     });
   }
 
   ngOnDestroy() {
     this.detenerActualizacion();
+    // Aseguramos que la suscripción a las bolas se desuscriba
+    if (this.ballsSubscription) {
+      this.ballsSubscription.unsubscribe();
+      console.log('Suscripción a bolas de Firebase terminada.');
+    }
     if (this.mapa) {
-      this.mapa.remove(); // Limpia el mapa de Leaflet
+      this.mapa.setTarget(undefined);
       // @ts-ignore
-      this.mapa = null; // Elimina la referencia para evitar fugas de memoria
-      console.log('Mapa de Leaflet destruido.');
+      this.mapa = null;
+      console.log('Mapa de OpenLayers destruido.');
     }
   }
 
@@ -78,7 +91,7 @@ export class MapaPage implements OnInit, OnDestroy, AfterViewInit {
 
       this.inicializarMapa(lat, lng);
 
-      if (this.mapa) { // Solo iniciar actualización si el mapa se inicializó con éxito
+      if (this.mapa) {
         this.iniciarActualizacionContinua();
       }
 
@@ -95,78 +108,116 @@ export class MapaPage implements OnInit, OnDestroy, AfterViewInit {
       return;
     }
 
-    // Asegurarse de que no haya un mapa duplicado si se llama varias veces
     if (this.mapa) {
-      this.mapa.remove();
+      this.mapa.setTarget(undefined);
       console.log('Mapa existente removido antes de reinicializar.');
     }
 
-    // Inicializar el mapa de Leaflet
-    this.mapa = L.map(elemento, {
-        zoomControl: false // Oculta los botones de zoom si no los necesitas, gestionas el zoom con tu app
-    }).setView([lat, lng], 17); // Nivel de zoom inicial
+    // ORIGINAL: Se centra en tu ubicación actual
+    // const coordenadaInicial = fromLonLat([lng, lat]);
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors',
-      maxZoom: 19 // Limita el zoom máximo para consistencia
-    }).addTo(this.mapa);
+    // *** TEMPORALMENTE: Centrar en una de las bolas para depuración ***
+    // (Recuerda volver a la línea original después de la prueba)
+    const coordenadaDeUnaBola = fromLonLat([-58.4390227, -34.5971658]); // Usa una de las coordenadas de tus bolas
+    // *******************************************************************
 
-    // Añadir marcador del jugador
-    this.jugadorMarker = L.marker([lat, lng], {
-      icon: L.icon({
-        iconUrl: 'assets/icon/player.png', // Asegúrate de que esta ruta sea correcta
-        iconSize: [35, 35], // Tamaño del ícono
-        iconAnchor: [17, 35], // Punto "inferior" del ícono que se ancla a la lat/lng
-      }),
-    }).addTo(this.mapa);
 
-    // **CRUCIAL PARA IONIC/ANGULAR**: Forzar a Leaflet a recalcular el tamaño de su contenedor.
-    // Ejecutar fuera de la zona de Angular para evitar problemas de rendimiento y re-renderizado.
-    this.ngZone.runOutsideAngular(() => {
-        // Un setTimeout más generoso o incluso un retraso escalonado
-        setTimeout(() => {
-            if (this.mapa) {
-                this.mapa.invalidateSize();
-                console.log('mapa.invalidateSize() llamado con éxito.');
-            }
-        }, 750); // Aumentado a 750ms para mayor seguridad
+    this.vectorSource = new VectorSource<Feature<Point>>();
+    const vectorLayer = new VectorLayer({
+      source: this.vectorSource,
     });
-    console.log('Mapa de Leaflet inicializado.');
+
+    this.mapa = new Map({
+      target: elemento,
+      layers: [
+        new TileLayer({
+          source: new OSM()
+        }),
+        vectorLayer
+      ],
+      view: new View({
+        // *** CAMBIO AQUÍ PARA CENTRAR EN LA BOLA ***
+        center: coordenadaDeUnaBola, // Usa la coordenada de la bola para depuración
+        // *****************************************
+        zoom: 17, // Puedes probar con un zoom menor como 14 o 12 para ver más área
+        projection: 'EPSG:3857'
+      }),
+      controls: []
+    });
+
+    this.jugadorFeature = new Feature({
+      geometry: new Point(fromLonLat([lng, lat])), // El jugador sigue en tu posición real
+    });
+
+    this.jugadorFeature.setStyle(new Style({
+      image: new Icon({
+        src: 'https://cdn-icons-png.flaticon.com/512/61/61109.png', // Icono de persona genérico
+        size: [35, 35],
+        anchor: [0.5, 1],
+        anchorXUnits: 'fraction',
+        anchorYUnits: 'fraction',
+        crossOrigin: 'anonymous'
+      }),
+    }));
+
+    this.vectorSource.addFeature(this.jugadorFeature);
+    console.log('Mapa de OpenLayers inicializado con jugador.');
+
+    // MOVIDO AQUÍ: Suscribirse a las bolas solo después de que el mapa esté inicializado
+    this.ballsSubscription = this.firebaseService.obsBalls.subscribe((bolas: globalThis.Map<string, BALL>) => {
+      this.ngZone.run(() => {
+        this.actualizarBolasEnMapa(bolas);
+      });
+    });
+    console.log('Suscripción a obsBalls activada después de inicializar mapa.');
   }
 
-  private actualizarBolasEnMapa(bolas: Map<string, BALL>) {
-    if (!this.mapa) {
-        console.warn('Mapa no inicializado, no se pueden actualizar las bolas.');
+  private actualizarBolasEnMapa(bolas: globalThis.Map<string, BALL>) {
+    if (!this.mapa || !this.vectorSource) {
+        // Este console.warn ya no debería aparecer con la lógica corregida
+        console.warn('Mapa o vectorSource no inicializado, no se pueden actualizar las bolas. (Este mensaje no debería verse)');
         return;
     }
 
-    // Eliminar bolas que ya no están en la lista de Firebase
-    this.ballsMarkers.forEach((marker, id) => {
+    // Primero, elimina las bolas del mapa que ya no existen en los datos de Firebase
+    this.ballsFeatures.forEach((feature: Feature<Point>, id: string) => {
       if (!bolas.has(id)) {
-        this.mapa.removeLayer(marker);
-        this.ballsMarkers.delete(id);
+        this.vectorSource.removeFeature(feature);
+        this.ballsFeatures.delete(id);
       }
     });
 
-    // Actualizar o añadir bolas nuevas
+    // Luego, añade o actualiza las bolas restantes
     bolas.forEach((ball: BALL, id: string) => {
-      const existente = this.ballsMarkers.get(id);
-      if (existente) {
-        existente.setLatLng([ball.lat, ball.long]);
-      } else {
-        // Asegúrate de que las propiedades lat/long existen antes de crear el marcador
-        if (typeof ball.lat === 'number' && typeof ball.long === 'number') {
-            const marker = L.marker([ball.lat, ball.long], {
-              icon: L.icon({
-                iconUrl: 'assets/icon/ball.png', // Asegúrate de que esta ruta sea correcta
-                iconSize: [30, 30],
-                iconAnchor: [15, 30],
-              }),
-            }).addTo(this.mapa);
-            this.ballsMarkers.set(id, marker);
+      const existente = this.ballsFeatures.get(id);
+      // Aseguramos que lat, long y OWNER existan y sean números válidos para lat/long
+      if (typeof ball.lat === 'number' && typeof ball.long === 'number' && ball.OWNER) {
+        const coordenadaBall = fromLonLat([ball.long, ball.lat]);
+        if (existente) {
+          (existente.getGeometry() as Point).setCoordinates(coordenadaBall);
+          console.log(`✅ Bola ID: ${id} actualizada en el vectorSource.`); // Log para bolas actualizadas
         } else {
-            console.warn(`Datos de bola incompletos o inválidos para ID: ${id}`, ball);
+          const ballFeature = new Feature({
+            geometry: new Point(coordenadaBall),
+          });
+          // CAMBIO IMPORTANTE AQUÍ: Usando un icono externo para la bola
+          ballFeature.setStyle(new Style({
+            image: new Icon({
+              src: 'https://cdn-icons-png.flaticon.com/512/2875/2875560.png', // Icono de bola de billar
+              size: [30, 30],
+              anchor: [0.5, 1],
+              anchorXUnits: 'fraction',
+              anchorYUnits: 'fraction',
+              crossOrigin: 'anonymous'
+            }),
+          }));
+          this.vectorSource.addFeature(ballFeature);
+          this.ballsFeatures.set(id, ballFeature);
+          console.log(`✅ Bola ID: ${id} añadida al vectorSource.`); // Log para bolas añadidas
         }
+      } else {
+        // Mejoramos el mensaje de advertencia para indicar qué falta
+        console.warn(`⚠️ BALL inválida ignorada (ID: ${id}): falta lat/long válidos o OWNER.`, ball);
       }
     });
   }
@@ -177,14 +228,14 @@ export class MapaPage implements OnInit, OnDestroy, AfterViewInit {
       return;
     }
 
-    this.detenerActualizacion(); // Limpiar cualquier intervalo anterior
+    this.detenerActualizacion();
 
-    this.actualizarPosicion(); // Ejecutar una vez inmediatamente al iniciar
+    this.actualizarPosicion(); // Llama una vez inmediatamente
 
     this.intervaloId = setInterval(() => {
       this.actualizarPosicion();
       this.verificarColisiones();
-    }, 1000); // Actualiza cada segundo
+    }, 1000);
     console.log('Actualización de ubicación y bolas iniciada.');
   }
 
@@ -202,47 +253,52 @@ export class MapaPage implements OnInit, OnDestroy, AfterViewInit {
       const nuevaLat = posicion.coords.latitude;
       const nuevaLong = posicion.coords.longitude;
 
-      // Un pequeño umbral para evitar actualizaciones constantes por cambios mínimos
-      const umbralCambio = 0.000001; // Aproximadamente 0.1 metros de cambio en lat/long
+      const umbralCambio = 0.000001;
       const latCambio = this.latitud === null ? Infinity : Math.abs(this.latitud - nuevaLat);
       const longCambio = this.longitud === null ? Infinity : Math.abs(this.longitud - nuevaLong);
 
       if (latCambio > umbralCambio || longCambio > umbralCambio) {
         this.firebaseService.setPosicion(nuevaLat, nuevaLong);
-        // Ojo: `crearBall` cada segundo crearía MUCHAS bolas. Considera moverlo a una interacción específica del usuario.
-        // this.firebaseService.crearBall(nuevaLat, nuevaLong);
 
         this.latitud = nuevaLat;
         this.longitud = nuevaLong;
         this.actualizarMarcadorJugador(nuevaLat, nuevaLong);
-        // Opcional: Centrar el mapa en el jugador mientras se mueve (desactiva si quieres mover el mapa manualmente)
-        // if (this.mapa && this.jugadorMarker) {
-        //   this.mapa.panTo(this.jugadorMarker.getLatLng());
+        // Si el mapa NO está centrado en la bola para depuración, asegúrate de que se mueva con el jugador
+        // if (this.mapa && this.jugadorFeature) {
+        //   const playerCoordinates = (this.jugadorFeature.getGeometry() as Point).getCoordinates();
+        //   this.mapa.getView().setCenter(playerCoordinates);
         // }
       }
     } catch (err: any) {
       this.error = 'Error al obtener la ubicación: ' + err.message;
       console.error('Error en actualizarPosicion:', err);
-      // Podrías detener la actualización si hay un error persistente
-      // this.detenerActualizacion();
     }
   }
 
   actualizarMarcadorJugador(lat: number, long: number) {
-    if (this.jugadorMarker) {
-      this.jugadorMarker.setLatLng([lat, long]);
+    if (this.jugadorFeature) {
+      const nuevaCoordenada = fromLonLat([long, lat]);
+      (this.jugadorFeature.getGeometry() as Point).setCoordinates(nuevaCoordenada);
     } else {
-      // Si el marcador no se ha inicializado por alguna razón, créalo ahora
-      if (this.mapa) {
-        this.jugadorMarker = L.marker([lat, long], {
-          icon: L.icon({
-            iconUrl: 'assets/icon/player.png',
-            iconSize: [35, 35],
-            iconAnchor: [17, 35],
-          }),
-        }).addTo(this.mapa);
+      if (this.mapa && this.vectorSource) {
+          console.warn('Jugador Feature no encontrada, creándola de nuevo.');
+          const coordenadaJugador = fromLonLat([long, lat]);
+          this.jugadorFeature = new Feature({
+              geometry: new Point(coordenadaJugador),
+          });
+          this.jugadorFeature.setStyle(new Style({
+              image: new Icon({
+                  src: 'https://cdn-icons-png.flaticon.com/512/61/61109.png', // Icono de persona genérico
+                  size: [35, 35],
+                  anchor: [0.5, 1],
+                  anchorXUnits: 'fraction',
+                  anchorYUnits: 'fraction',
+                  crossOrigin: 'anonymous'
+              }),
+          }));
+          this.vectorSource.addFeature(this.jugadorFeature);
       } else {
-          console.warn('No se puede crear marcador de jugador: mapa no inicializado.');
+          console.warn('No se puede crear marcador de jugador: mapa o vectorSource no inicializado.');
       }
     }
   }
@@ -251,10 +307,10 @@ export class MapaPage implements OnInit, OnDestroy, AfterViewInit {
     if (!this.latitud || !this.longitud) return;
 
     this.firebaseService.listaBalls.forEach((ball, id) => {
-      // Asegurarse de que ball tenga lat/long válidos
-      if (typeof ball.lat === 'number' && typeof ball.long === 'number') {
+      // Aseguramos que lat, long y OWNER existan y sean números válidos para lat/long
+      if (typeof ball.lat === 'number' && typeof ball.long === 'number' && ball.OWNER) {
         const distancia = this.calcularDistancia(this.latitud!, this.longitud!, ball.lat, ball.long);
-        const radioColisionMetros = 5; // Ajusta este valor según el tamaño visual de las bolas y jugadores
+        const radioColisionMetros = 5;
         if (distancia < radioColisionMetros && ball.OWNER !== this.firebaseService.authid) {
           this.firebaseService.eliminarBall(id);
           if (this.firebaseService.jugadorActual) {
@@ -264,7 +320,7 @@ export class MapaPage implements OnInit, OnDestroy, AfterViewInit {
           }
         }
       } else {
-        console.warn(`Ball con ID ${id} tiene lat/long inválidos para colisión:`, ball);
+        console.warn(`⚠️ BALL con ID ${id} tiene lat/long inválidos o falta OWNER para colisión:`, ball);
       }
     });
   }
@@ -281,20 +337,22 @@ export class MapaPage implements OnInit, OnDestroy, AfterViewInit {
       Math.sin(dLon / 2) * Math.sin(dLon / 2);
 
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c; // Distancia en metros
+    return R * c;
   }
 
-  // Este método parece no estar en uso directo en tu plantilla actual, pero lo mantengo.
   modificarJugadorVisual(seteo: { Nick: string; Icono: number; Color: string }) {
     console.log('Actualizar visual del jugador:', seteo);
-    // Podrías usar esto para cambiar dinámicamente el icono del jugador
-    // if (this.jugadorMarker && this.mapa) {
-    //     const nuevoIcono = L.icon({
-    //         iconUrl: `assets/icon/${seteo.Icono}.png`, // Asegúrate que el Icono se mapea a un nombre de archivo
-    //         iconSize: [35, 35],
-    //         iconAnchor: [17, 35],
-    //     });
-    //     this.jugadorMarker.setIcon(nuevoIcono);
-    // }
+    if (this.jugadorFeature) {
+      this.jugadorFeature.setStyle(new Style({
+        image: new Icon({
+          src: 'https://cdn-icons-png.flaticon.com/512/61/61109.png', // Mantenemos el icono de prueba para asegurar visibilidad
+          size: [35, 35],
+          anchor: [0.5, 1],
+          anchorXUnits: 'fraction',
+          anchorYUnits: 'fraction',
+          crossOrigin: 'anonymous'
+        }),
+      }));
+    }
   }
 }
