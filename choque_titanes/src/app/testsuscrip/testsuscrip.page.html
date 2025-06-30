@@ -7,8 +7,8 @@
 <ion-content>
   <h2>Jugadores en el mapa:</h2>
   <div *ngFor="let jugador of jugadoresEnMapa.values()">
-    <div [style.color]="jugador.SETEO.Color">
-      👤 {{ jugador.SETEO.Nick }} - 📍 ({{ jugador.POS.lat }}, {{ jugador.POS.long }}) - ⭐ {{ jugador.PUNTOS }}
+    <div [style.color]="jugador.seteo.color">
+      👤 {{ jugador.seteo.nick }} - 📍 ({{ jugador.POS.lat }}, {{ jugador.POS.long }}) - ⭐ {{ jugador.PUNTOS }}
     </div>
   </div>
 

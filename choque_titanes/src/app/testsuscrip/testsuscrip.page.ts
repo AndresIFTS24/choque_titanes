@@ -54,11 +54,11 @@ export class TestsuscripPage implements OnInit {
     this.jugadoresEnMapa.delete(uid);
   }
 
-  actualizarSeteoJugador(uid: string, nuevoSeteo: JUGADOR['SETEO']) {
+  actualizarSeteoJugador(uid: string, nuevoSeteo: JUGADOR['seteo']) {
     console.log("🎨 Seteo actualizado:", uid, nuevoSeteo);
     const jugador = this.jugadoresEnMapa.get(uid);
     if (jugador) {
-      jugador.SETEO = nuevoSeteo;
+      jugador.seteo = nuevoSeteo;
       this.jugadoresEnMapa.set(uid, jugador);
     }
   }
