@@ -37,4 +37,31 @@
       <p class="mensaje-espera">Aun no se ha obtenido la ubicacion</p>
 
     }
+@if (jugador) {
+  <ion-card>
+    <ion-card-header>
+      <p style="    font-size: 1.6rem;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 30 px;
+    color:#8ade86;">🛡️¡Bienvenido Titán!</p> 
+      <ion-card-title [style.color]="jugador.seteo.color">
+        {{ jugador.seteo.nick }}</ion-card-title>
+    </ion-card-header>
+    <ion-card-content>
+      <img
+        [src]="getAvatarUrl(jugador.seteo.icono)"
+        alt="Avatar"
+        width="100"
+        [style.border]="'5px solid ' + jugador.seteo.color"
+        style="border-radius: 50%;"
+      />
+    </ion-card-content>
+  </ion-card>
+  <ion-button id="btnEditar" expand="full" color="primary" (click)="editarPerfil()">
+  Configurar PJ
+</ion-button>
+}
+
+  <!-- <app-jugadores></app-jugadores> -->
 </ion-content>

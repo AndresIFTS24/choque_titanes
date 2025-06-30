@@ -12,6 +12,9 @@ export class FirebaseDbService {
   //esto es porque algunos métodos solo se deberían poder ejecutar para el usuario local
   //este componente debe a futuro conectarse con el auth
 
+  getUid(): string {
+  return this.authid;
+}
   authid: string = "PROVISORIO_AUTH_UID";
 
     // Jugador actual conectado (único)
@@ -65,7 +68,7 @@ export class FirebaseDbService {
       // Si no existe, lo agregamos a listaJugadores
       if (!this.listaJugadores.has(uid)) {
         const jugadorBasico: JUGADOR = {
-          SETEO: { Nick: '', Icono: 0, Color: '#000000' },  // valores por defecto a cargar en otro método
+          seteo: { nick: '', icono: 0, color: '#000000' },  // valores por defecto a cargar en otro método
           POS: { lat: 0, long: 0 },
           PUNTOS: 0
         };
@@ -180,7 +183,7 @@ export class FirebaseDbService {
 
       switch (propiedad) {
         case 'SETEO':
-          jugador.SETEO = nuevoValor;
+          jugador.seteo = nuevoValor;
           console.log(`SETEO actualizado para ${uid}:`, nuevoValor);
           this.mapaBridge.modjugador_seteo?.(uid,nuevoValor);
           //Llamar a modificar visualmente al jugador online

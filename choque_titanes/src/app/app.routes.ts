@@ -23,12 +23,15 @@ export const routes: Routes = [
   },
   
   {
-    path: 'fb',
+    path: 'fb',//TEST
     loadComponent: () => import('./firebase-test/firebase-test.page').then(m => m.FirebaseTestPage),
   },
   {
-  path: 'ts',
+    path: 'ts',//TEST
   loadComponent: () => import('./testsuscrip/testsuscrip.page').then(m => m.TestsuscripPage),
-}
-
+  },
+  {
+    path: 'jugadores',//TEST
+    loadComponent: () => import('./jugadores/jugadores.component').then( m => m.JugadoresComponent)
+  }
 ];
