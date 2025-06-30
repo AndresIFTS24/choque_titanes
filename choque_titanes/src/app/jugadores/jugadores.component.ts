@@ -46,8 +46,6 @@ iconos:| { imagenAvatar: string } [] | undefined = [
 obtenerUrlSeleccionada(): any {
   switch (this.avatarSeleccionado) {
     case 'avatar1':
-      return this.iconos?.[0];
-
       return this.imagenUno;
     case 'avatar2':
       return this.imagenDos;
@@ -62,7 +60,7 @@ obtenerUrlSeleccionada(): any {
   constructor(private modalCtrl: ModalController,  private auth: Auth, private firebaseDb: FirebaseDbService, private router: Router) {}
 
   ngOnInit() {
-    console.log(this.iconos?.[2]);
+
     console.log(this.arrayJugadores);
 
         if (this.nickActual) {
