@@ -1,31 +1,76 @@
-import { Component } from '@angular/core';
-import { IonHeader, IonToolbar, IonTitle, IonContent, IonButton } from '@ionic/angular/standalone';
+import { Component, OnInit } from '@angular/core';
+import { IonHeader, IonToolbar, IonTitle, IonContent, IonButton, ModalController } from '@ionic/angular/standalone';
 import { Geolocation, PermissionStatus } from '@capacitor/geolocation'
 import { UrlSeguraPipe } from '../pipes/url-segura.pipe';
-import { AuthService } from '../services/auth.service'; 
+import { AuthService } from '../services/auth.service';
+import { FirebaseDbService } from '../services/firebase-db.service';
+import { JUGADOR } from '../services/models';
+import { IonicModule } from '@ionic/angular';
+import { JugadoresComponent } from '../jugadores/jugadores.component';
 
 @Component({
   selector: 'app-mapa',
   templateUrl: 'mapa.page.html',
   styleUrls: ['mapa.page.scss'],
   standalone: true,
-  imports: [UrlSeguraPipe, IonHeader, IonToolbar, IonTitle, IonContent, IonButton],
+  imports: [IonicModule ,UrlSeguraPipe],
 })
-export class MapaPage {
+export class MapaPage implements OnInit{
+
   //Variables que vamos a utilizar
   latitud?: number;
   longitud?: number;
   error?: string;
+  jugador: JUGADOR | null = null;
 
   // Inyecto el AuthService para cerrar sesion
-  constructor(private auth: AuthService) {}
+  constructor(private authService: AuthService, private firebaseDb: FirebaseDbService, private modalCtrl: ModalController) {}
 
+  async ngOnInit() {
+    const user = this.authService.getUsuarioActual();
+    if (!user) return;
+
+    const perfil = await this.firebaseDb.obtenerPerfil(user.uid);
+    if (perfil) {
+      this.jugador = perfil;
+    }
+  }
+
+  getAvatarUrl(icono: number): string {
+    return `assets/icon/avatar-${icono}.png`; // Ajustá la ruta según tu carpeta de íconos
+  }
   //boton Logout
   cerrarSesion(){
-    this.auth.cerrarSesion();
+    this.authService.cerrarSesion();
   
   }
 
+    async editarPerfil() {
+    const modal = await this.modalCtrl.create({
+      component: JugadoresComponent,
+      componentProps: {
+        nickActual: this.jugador?.seteo.nick,
+        colorActual: this.jugador?.seteo.color,
+        iconoActual: this.jugador?.seteo.icono 
+      },
+      backdropDismiss: false,
+      breakpoints: [0, 0.5, 0.9],
+      initialBreakpoint: 0.9
+    });
+
+    await modal.present();
+
+    const { data, role } = await modal.onWillDismiss();
+    console.log(data);
+    if (role === 'confirm') {
+      // Actualizar jugador después de la edición
+      const user = this.authService.getUsuarioActual();
+      if (user) {
+        const perfilActualizado = await this.firebaseDb.obtenerPerfil(user.uid);
+        this.jugador = perfilActualizado;
+      }
+    }
+  }
   private async verificarPermisosDeUbicacion(): Promise<boolean> {
     //Consultar los permisos actuales
     const permisos = await Geolocation.checkPermissions();
