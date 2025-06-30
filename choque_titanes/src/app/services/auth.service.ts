@@ -19,15 +19,28 @@ export class AuthService {
   }
 
   // Método para abrir el modal de configuración de perfil
-  async abrirModalConfiguracionPerfil() {
-    const modal = await this.modalCtrl.create({
-      component: JugadoresComponent,
-      backdropDismiss: false, //El modal no se puede cerrar tocando afuera. Ideal para forzar al usuario a completar su perfil antes de seguir
-      breakpoints: [0, 0.5, 0.9],
-      initialBreakpoint: 0.9 //Al abrirse, el modal ocupa el 90% de la pantalla.
-    });
-    await modal.present();
+async abrirModalConfiguracionPerfil() {
+  const modal = await this.modalCtrl.create({
+    component: JugadoresComponent,
+    backdropDismiss: false,
+    breakpoints: [0, 0.5, 0.9],
+    initialBreakpoint: 0.9,
+  });
+
+  await modal.present();
+
+  const { data, role } = await modal.onWillDismiss();
+
+  if (role === 'confirm') {
+    console.log('Modal confirmado, redirigiendo al mapa...');
+    this.router.navigate(['/mapa']);
+  } else {
+    console.log('Modal cerrado sin confirmar');
   }
+}
+  getUsuarioActual(): User | null {
+  return this.usuarioActual;
+}
   async registrar(email: string, password:string){
     const cred = await createUserWithEmailAndPassword(this.auth, email, password);
     await sendEmailVerification(cred.user);
