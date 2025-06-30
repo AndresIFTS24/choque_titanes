@@ -47,7 +47,7 @@ export class MapaPage implements OnInit, OnDestroy, AfterViewInit {
   constructor(
     private firebaseService: FirebaseDbService,
     private ngZone: NgZone
-  ) {}
+  ) { }
 
   ngOnInit() {
     // Solo conectamos al servicio Firebase aquí.
@@ -113,14 +113,7 @@ export class MapaPage implements OnInit, OnDestroy, AfterViewInit {
       console.log('Mapa existente removido antes de reinicializar.');
     }
 
-    // ORIGINAL: Se centra en tu ubicación actual
-    // const coordenadaInicial = fromLonLat([lng, lat]);
-
-    // *** TEMPORALMENTE: Centrar en una de las bolas para depuración ***
-    // (Recuerda volver a la línea original después de la prueba)
-    const coordenadaDeUnaBola = fromLonLat([-58.4390227, -34.5971658]); // Usa una de las coordenadas de tus bolas
-    // *******************************************************************
-
+    const coordenadaInicial = fromLonLat([lng, lat]);
 
     this.vectorSource = new VectorSource<Feature<Point>>();
     const vectorLayer = new VectorLayer({
@@ -136,22 +129,20 @@ export class MapaPage implements OnInit, OnDestroy, AfterViewInit {
         vectorLayer
       ],
       view: new View({
-        // *** CAMBIO AQUÍ PARA CENTRAR EN LA BOLA ***
-        center: coordenadaDeUnaBola, // Usa la coordenada de la bola para depuración
-        // *****************************************
-        zoom: 17, // Puedes probar con un zoom menor como 14 o 12 para ver más área
+        center: coordenadaInicial,
+        zoom: 17,
         projection: 'EPSG:3857'
       }),
       controls: []
     });
 
     this.jugadorFeature = new Feature({
-      geometry: new Point(fromLonLat([lng, lat])), // El jugador sigue en tu posición real
+      geometry: new Point(coordenadaInicial),
     });
 
     this.jugadorFeature.setStyle(new Style({
       image: new Icon({
-        src: 'https://cdn-icons-png.flaticon.com/512/61/61109.png', // Icono de persona genérico
+        src: 'https://cdn-icons-png.flaticon.com/512/61/61109.png',
         size: [35, 35],
         anchor: [0.5, 1],
         anchorXUnits: 'fraction',
@@ -161,9 +152,10 @@ export class MapaPage implements OnInit, OnDestroy, AfterViewInit {
     }));
 
     this.vectorSource.addFeature(this.jugadorFeature);
-    console.log('Mapa de OpenLayers inicializado con jugador.');
 
-    // MOVIDO AQUÍ: Suscribirse a las bolas solo después de que el mapa esté inicializado
+    // Forzar el centrado del mapa en el jugador al inicio
+    this.mapa.getView().setCenter(coordenadaInicial);
+
     this.ballsSubscription = this.firebaseService.obsBalls.subscribe((bolas: globalThis.Map<string, BALL>) => {
       this.ngZone.run(() => {
         this.actualizarBolasEnMapa(bolas);
@@ -174,9 +166,9 @@ export class MapaPage implements OnInit, OnDestroy, AfterViewInit {
 
   private actualizarBolasEnMapa(bolas: globalThis.Map<string, BALL>) {
     if (!this.mapa || !this.vectorSource) {
-        // Este console.warn ya no debería aparecer con la lógica corregida
-        console.warn('Mapa o vectorSource no inicializado, no se pueden actualizar las bolas. (Este mensaje no debería verse)');
-        return;
+      // Este console.warn ya no debería aparecer con la lógica corregida
+      console.warn('Mapa o vectorSource no inicializado, no se pueden actualizar las bolas. (Este mensaje no debería verse)');
+      return;
     }
 
     // Primero, elimina las bolas del mapa que ya no existen en los datos de Firebase
@@ -203,8 +195,8 @@ export class MapaPage implements OnInit, OnDestroy, AfterViewInit {
           // CAMBIO IMPORTANTE AQUÍ: Usando un icono externo para la bola
           ballFeature.setStyle(new Style({
             image: new Icon({
-              src: 'https://cdn-icons-png.flaticon.com/512/2875/2875560.png', // Icono de bola de billar
-              size: [30, 30],
+              src: 'assets/icon/ball.png',
+              scale: 0.07, // Ajustá este valor según el tamaño real del PNG
               anchor: [0.5, 1],
               anchorXUnits: 'fraction',
               anchorYUnits: 'fraction',
@@ -281,24 +273,24 @@ export class MapaPage implements OnInit, OnDestroy, AfterViewInit {
       (this.jugadorFeature.getGeometry() as Point).setCoordinates(nuevaCoordenada);
     } else {
       if (this.mapa && this.vectorSource) {
-          console.warn('Jugador Feature no encontrada, creándola de nuevo.');
-          const coordenadaJugador = fromLonLat([long, lat]);
-          this.jugadorFeature = new Feature({
-              geometry: new Point(coordenadaJugador),
-          });
-          this.jugadorFeature.setStyle(new Style({
-              image: new Icon({
-                  src: 'https://cdn-icons-png.flaticon.com/512/61/61109.png', // Icono de persona genérico
-                  size: [35, 35],
-                  anchor: [0.5, 1],
-                  anchorXUnits: 'fraction',
-                  anchorYUnits: 'fraction',
-                  crossOrigin: 'anonymous'
-              }),
-          }));
-          this.vectorSource.addFeature(this.jugadorFeature);
+        console.warn('Jugador Feature no encontrada, creándola de nuevo.');
+        const coordenadaJugador = fromLonLat([long, lat]);
+        this.jugadorFeature = new Feature({
+          geometry: new Point(coordenadaJugador),
+        });
+        this.jugadorFeature.setStyle(new Style({
+          image: new Icon({
+            src: 'https://cdn-icons-png.flaticon.com/512/61/61109.png', // Icono de persona genérico
+            size: [35, 35],
+            anchor: [0.5, 1],
+            anchorXUnits: 'fraction',
+            anchorYUnits: 'fraction',
+            crossOrigin: 'anonymous'
+          }),
+        }));
+        this.vectorSource.addFeature(this.jugadorFeature);
       } else {
-          console.warn('No se puede crear marcador de jugador: mapa o vectorSource no inicializado.');
+        console.warn('No se puede crear marcador de jugador: mapa o vectorSource no inicializado.');
       }
     }
   }
