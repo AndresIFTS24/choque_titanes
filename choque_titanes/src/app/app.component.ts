@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { IonApp, IonRouterOutlet } from '@ionic/angular/standalone';
 import { Platform } from '@ionic/angular';
 import { BackgroundMode } from '@awesome-cordova-plugins/background-mode/ngx';
+import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import { Geolocation } from '@capacitor/geolocation';
 
 @Component({
@@ -26,5 +27,9 @@ export class AppComponent {
     });
 
   }
+
+async vibrarConEstilo() {
+  await Haptics.impact({ style: ImpactStyle.Heavy });
+}
 
 }
