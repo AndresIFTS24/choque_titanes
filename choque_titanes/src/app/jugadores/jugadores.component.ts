@@ -150,6 +150,7 @@ async confirm() {
 
     
     console.log('🟢 Confirmación exitosa, cerrando modal y navegando');
+    this.router.navigate(['/mapa']);
     this.modalCtrl.dismiss(this.name, 'confirm');
 
   } catch (error) {
