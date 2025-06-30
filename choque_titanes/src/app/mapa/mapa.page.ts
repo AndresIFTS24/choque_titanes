@@ -2,20 +2,29 @@ import { Component } from '@angular/core';
 import { IonHeader, IonToolbar, IonTitle, IonContent, IonButton } from '@ionic/angular/standalone';
 import { Geolocation, PermissionStatus } from '@capacitor/geolocation'
 import { UrlSeguraPipe } from '../pipes/url-segura.pipe';
-import { JugadoresComponent } from "../jugadores/jugadores.component"; 
+import { AuthService } from '../services/auth.service'; 
 
 @Component({
   selector: 'app-mapa',
-  standalone: true,
   templateUrl: 'mapa.page.html',
   styleUrls: ['mapa.page.scss'],
-  imports: [UrlSeguraPipe, IonHeader, IonToolbar, IonTitle, IonContent, IonButton, JugadoresComponent],
+  standalone: true,
+  imports: [UrlSeguraPipe, IonHeader, IonToolbar, IonTitle, IonContent, IonButton],
 })
 export class MapaPage {
   //Variables que vamos a utilizar
   latitud?: number;
   longitud?: number;
   error?: string;
+
+  // Inyecto el AuthService para cerrar sesion
+  constructor(private auth: AuthService) {}
+
+  //boton Logout
+  cerrarSesion(){
+    this.auth.cerrarSesion();
+  
+  }
 
   private async verificarPermisosDeUbicacion(): Promise<boolean> {
     //Consultar los permisos actuales
@@ -66,5 +75,7 @@ export class MapaPage {
   get googleMapsUrl(): string | null {
     return this.latitud !== undefined && this.longitud !== undefined ? `https://www.google.com/maps?q=${this.latitud},${this.longitud}&hl=es&z=15&output=embed` : null;
   }
+
+  
   
 }

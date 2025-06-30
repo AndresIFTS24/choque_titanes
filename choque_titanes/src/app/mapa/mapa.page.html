@@ -3,6 +3,7 @@
     <ion-title>
       Mapa de jugadores
     </ion-title>
+    <ion-button color="danger" slot="end" (click)="cerrarSesion()">Logout</ion-button> 
   </ion-toolbar>
 </ion-header>
 
@@ -16,9 +17,9 @@
     
     <p>Latitud: {{latitud}}</p>
     <p>Longitud: {{longitud}}</p>
-   
+  
   }
-   <!-- Si hay un error y no hay coordenadas, mostrar mensaje de error -->
+  <!-- Si hay un error y no hay coordenadas, mostrar mensaje de error -->
     @else if(error){
     
       <p class="ion-text-danger">{{error}}</p>
@@ -27,7 +28,7 @@
     
     @if(googleMapsUrl){
     
-      <iframe [src]="googleMapsUrl |urlSegura" class="mapa-iframe"></iframe>
+      <iframe [src]="googleMapsUrl |urlSegura" class="mapa-iframe" title="Mapa de ubicación en Google Maps"></iframe>
       
     }
     
