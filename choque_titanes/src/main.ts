@@ -8,7 +8,7 @@ import { provideDatabase, getDatabase } from '@angular/fire/database';
 import { routes } from './app/app.routes';
 import { AppComponent } from './app/app.component';
 
-// Tu configuración Firebase (usa la tuya real)
+// Configuración Firebase
 const firebaseConfig = {
   apiKey: 'AIzaSyDkHFTWy3TNcQ_VyLybaQjZA8e_vA1fqyI',
   authDomain: 'choquetitanes-8e520.firebaseapp.com',

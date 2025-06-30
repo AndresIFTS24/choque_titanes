@@ -1,6 +1,6 @@
 export interface SETEO {
   Nick: string;
-  Icono: number; //indice del icono
+  Icono: number; // índice del icono
   Color: string; // HEX del color
 }
 
@@ -16,7 +16,7 @@ export interface JUGADOR {
 }
 
 export interface BALL {
-  OWNER: string; //UID que genero la bola
+  OWNER: string; // UID que generó la bola
   lat: number;
   long: number;
 }

@@ -1,47 +1,35 @@
-<ion-header [translucent]="true">
+<ion-header>
   <ion-toolbar>
-    <ion-title>
-      Mapa de jugadores
-    </ion-title>
+    <ion-title>Mapa de jugadores</ion-title>
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true" class="ion-padding">
+<ion-content fullscreen>
+  <div id="mapa" class="mapa-container"></div>
 
-  <!-- Botones de control -->
-  <ion-button color="primary" expand="block" (click)="iniciarActualizacionContinua()">
-    Reanudar
-  </ion-button>
+  <div class="overlay-controls">
+    <ion-grid class="map-controls">
+      <ion-row>
+        <ion-col size="6">
+          <ion-button expand="block" color="primary" (click)="iniciarActualizacionContinua()">
+            Reanudar
+          </ion-button>
+        </ion-col>
+        <ion-col size="6">
+          <ion-button expand="block" color="danger" (click)="detenerActualizacion()">
+            Pausa
+          </ion-button>
+        </ion-col>
+      </ion-row>
+    </ion-grid>
 
-  <ion-button color="danger" expand="block" (click)="detenerActualizacion()">
-    Pausa
-  </ion-button>
+    <div class="coordenadas" *ngIf="latitud !== null && longitud !== null">
+      <p>📍 Latitud: {{ latitud }}</p>
+      <p>📍 Longitud: {{ longitud }}</p>
+    </div>
 
-  <!-- Coordenadas -->
-  <div *ngIf="latitud !== null && longitud !== null">
-    <p>Latitud: {{ latitud }}</p>
-    <p>Longitud: {{ longitud }}</p>
+    <div class="error-message" *ngIf="(latitud === null || longitud === null) && error">
+      <p class="ion-text-danger">{{ error }}</p>
+    </div>
   </div>
-
-  <!-- Error -->
-  <div *ngIf="(latitud === null || longitud === null) && error">
-    <p class="ion-text-danger">{{ error }}</p>
-  </div>
-
-  <!-- Mapa -->
-  <div *ngIf="googleMapsUrl; else mensajeEsperando">
-    <iframe
-      [src]="googleMapsUrl | urlSegura"
-      class="mapa-iframe"
-      width="100%"
-      height="400"
-      frameborder="0"
-      allowfullscreen
-    ></iframe>
-  </div>
-
-  <ng-template #mensajeEsperando>
-    <p class="mensaje-espera">Aún no se ha obtenido la ubicación</p>
-  </ng-template>
-
 </ion-content>
