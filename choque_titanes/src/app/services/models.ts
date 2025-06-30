@@ -1,7 +1,7 @@
-export interface SETEO {
-  Nick: string;
-  Icono: number; //indice del icono
-  Color: string; // HEX del color
+export interface SETEO  {
+  nick: string;
+  icono: number; //indice del icono
+  color: string; // HEX del color
 }
 
 export interface POS {
@@ -10,7 +10,7 @@ export interface POS {
 }
 
 export interface JUGADOR {
-  SETEO: SETEO;
+  seteo: SETEO;
   POS: POS;
   PUNTOS: number;
 }
