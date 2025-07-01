@@ -6,14 +6,31 @@
 
 <ion-content>
   <h2>Jugadores en el mapa:</h2>
-  <div *ngFor="let jugador of jugadoresEnMapa.values()">
-    <div [style.color]="jugador.seteo.color">
-      👤 {{ jugador.seteo.nick }} - 📍 ({{ jugador.POS.lat }}, {{ jugador.POS.long }}) - ⭐ {{ jugador.PUNTOS }}
+  <div *ngIf="jugadoresArray.length > 0; else sinJugadores">
+    <div *ngFor="let entry of jugadoresArray; trackBy: trackByUid">
+      <div *ngIf="entry[1]?.seteo && entry[1]?.pos" [style.color]="entry[1].seteo.color || 'black'">
+        👤 {{ entry[1].seteo.nick || 'Sin nick' }} -
+        📍 ({{ entry[1].pos.lat }}, {{ entry[1].pos.long }}) -
+        ⭐ {{ entry[1].puntos }}
+
+      </div>
+      <div *ngIf="!entry[1]?.seteo || !entry[1]?.pos">
+        ⚠️ Jugador con datos incompletos
+      </div>
     </div>
   </div>
+  <ng-template #sinJugadores>
+    <p>🔕 No hay jugadores conectados.</p>
+  </ng-template>
 
   <h2>Balls en el mapa:</h2>
-  <div *ngFor="let ball of ballsEnMapa.values()">
-    🎯 Ball de {{ ball.OWNER }} - ({{ ball.lat }}, {{ ball.long }})
+  <div *ngIf="ballsArray.length > 0; else sinBalls">
+    <div *ngFor="let entry of ballsArray; trackBy: trackByBallId">
+      🎯 Ball de {{ entry[1].owner || '¿?' }} -
+      ({{ entry[1].lat }}, {{ entry[1].long }})
+    </div>
   </div>
+  <ng-template #sinBalls>
+    <p>🔕 No hay balls en el mapa.</p>
+  </ng-template>
 </ion-content>

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Database, ref, set, get,  update, remove, push,onDisconnect, onChildAdded, onChildRemoved, onChildChanged } from '@angular/fire/database';
-import { JUGADOR, BALL } from './models';  // Ajustá la ruta según corresponda
+import { jugador, ball } from './models';  // Ajustá la ruta según corresponda
 import { MapaBridgeService } from './mapa-bridge.service';//No se puede llamar a una página directo desde una suscripción, se debe pibotear en un servicio
 
 
@@ -18,13 +18,13 @@ export class FirebaseDbService {
   authid: string = "PROVISORIO_AUTH_UID";
 
     // Jugador actual conectado (único)
-  jugadorActual: JUGADOR | null = null; // null si no hay jugador local conectado
+  jugadorActual: jugador | null = null; // null si no hay jugador local conectado
 
   // Lista de jugadores conectados
-  listaJugadores: Map<string, JUGADOR> = new Map();
+  listaJugadores: Map<string, jugador> = new Map();
 
   // Lista de balls en el mapa
-  listaBalls: Map<string, BALL> = new Map();
+  listaBalls: Map<string, ball> = new Map();
 
   constructor(private db: Database, private mapaBridge: MapaBridgeService) {}
   //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -67,10 +67,10 @@ export class FirebaseDbService {
 
       // Si no existe, lo agregamos a listaJugadores
       if (!this.listaJugadores.has(uid)) {
-        const jugadorBasico: JUGADOR = {
+        const jugadorBasico: jugador = {
           seteo: { nick: '', icono: 0, color: '#000000' },  // valores por defecto a cargar en otro método
-          POS: { lat: 0, long: 0 },
-          PUNTOS: 0
+          pos: { lat: 0, long: 0 },
+          puntos: 0
         };
         this.listaJugadores.set(uid, jugadorBasico);
         console.log(`🟢 Usuario conectado agregado a listaJugadores: ${uid}`);
@@ -97,7 +97,7 @@ export class FirebaseDbService {
   //            MANJEO DEL NODO PERFIL
   //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-  obtenerPerfil(uid: string): Promise<JUGADOR | null> {
+  obtenerPerfil(uid: string): Promise<jugador | null> {
     const perfilRef = ref(this.db, `PERFILES/${uid}`);
     //Esto es llamado al Loguiar, para ver si existe el perfil, con el auth_id del usuario
     this.authid = uid;//Provisorio
@@ -105,7 +105,7 @@ export class FirebaseDbService {
     return get(perfilRef)
       .then((snapshot) => {
         if (snapshot.exists()) {
-          const datos: JUGADOR = snapshot.val();
+          const datos: jugador = snapshot.val();
           this.jugadorActual = datos;
           console.log(`📥 Perfil obtenido de ${uid}:`, datos);
           return datos;
@@ -148,7 +148,22 @@ export class FirebaseDbService {
     const perfilRef = ref(this.db, `PERFILES/${uid}`);
       get(perfilRef).then((snapshot) => {
         if (snapshot.exists()) {
-          const datos: JUGADOR = snapshot.val();
+          let datos: jugador = snapshot.val();
+
+          if (datos == null) {
+            datos = {
+              puntos: 0,
+              seteo: {
+                nick:'NN',
+                color: 'black',
+                icono: 1
+              },
+              pos: {
+                lat: 0,
+                long: 0
+              }
+            };
+          } 
 
           this.listaJugadores.set(uid, datos);
           console.log(`✅ Perfil de ${uid} cargado:`, datos);
@@ -182,23 +197,23 @@ export class FirebaseDbService {
       }
 
       switch (propiedad) {
-        case 'SETEO':
+        case 'seteo':
           jugador.seteo = nuevoValor;
-          console.log(`SETEO actualizado para ${uid}:`, nuevoValor);
+          console.log(`seteo actualizado para ${uid}:`, nuevoValor);
           this.mapaBridge.modjugador_seteo?.(uid,nuevoValor);
           //Llamar a modificar visualmente al jugador online
           break;
 
-        case 'POS':
-          jugador.POS = nuevoValor;
-          console.log(`POS actualizado para ${uid}:`, nuevoValor);
+        case 'pos':
+          jugador.pos = nuevoValor;
+          console.log(`pos actualizado para ${uid}:`, nuevoValor);
           this.mapaBridge.modjugador_POS?.(uid,nuevoValor);
           //Llamar a modificar POS del mapa del jugador online
           break;
 
-        case 'PUNTOS':
-          jugador.PUNTOS = nuevoValor;
-          console.log(`PUNTOS actualizado para ${uid}:`, nuevoValor);
+        case 'puntos':
+          jugador.pos = nuevoValor;
+          console.log(`puntos actualizado para ${uid}:`, nuevoValor);
           this.mapaBridge.modjugador_puntos?.(uid,nuevoValor);
           //Que hacemos con los puntos de los jugadores conectados? los ponemos tambien en el maapa alado del numbre?
           break;

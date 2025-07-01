@@ -4,7 +4,7 @@ import { Geolocation, PermissionStatus } from '@capacitor/geolocation'
 import { UrlSeguraPipe } from '../pipes/url-segura.pipe';
 import { AuthService } from '../services/auth.service';
 import { FirebaseDbService } from '../services/firebase-db.service';
-import { JUGADOR } from '../services/models';
+import { jugador } from '../services/models';
 import { IonicModule } from '@ionic/angular';
 import { JugadoresComponent } from '../jugadores/jugadores.component';
 
@@ -21,7 +21,7 @@ export class MapaPage implements OnInit{
   latitud?: number;
   longitud?: number;
   error?: string;
-  jugador: JUGADOR | null = null;
+  jugador: jugador | null = null;
 
   // Inyecto el AuthService para cerrar sesion
   constructor(private authService: AuthService, private firebaseDb: FirebaseDbService, private modalCtrl: ModalController) {}

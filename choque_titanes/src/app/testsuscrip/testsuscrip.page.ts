@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { IonicModule } from '@ionic/angular';
 import { FirebaseDbService } from '../services/firebase-db.service';
 import { MapaBridgeService } from '../services/mapa-bridge.service';
-import { JUGADOR, BALL } from '../services/models';
+import { jugador, ball } from '../services/models';
 
 @Component({
   selector: 'app-testsuscrip',
@@ -14,8 +14,8 @@ import { JUGADOR, BALL } from '../services/models';
 })
 export class TestsuscripPage implements OnInit {
 
-  jugadoresEnMapa: Map<string, JUGADOR> = new Map();
-  ballsEnMapa: Map<string, BALL> = new Map();
+  jugadoresEnMapa: Map<string, jugador> = new Map();
+  ballsEnMapa: Map<string, ball> = new Map();
 
   constructor(
     private firebaseDbService: FirebaseDbService, 
@@ -34,41 +34,35 @@ export class TestsuscripPage implements OnInit {
     this.mapaBridge.modjugador_puntos = this.actualizarPuntosJugador.bind(this);
   }
 
-  crearBall(id: string, data: BALL) {
-    console.log("🟢 Ball creada:", id, data);
-    this.ballsEnMapa.set(id, data);
-  }
+  // ========= JUGADORES =========
 
-  borrarBall(id: string) {
-    console.log("🔴 Ball eliminada:", id);
-    this.ballsEnMapa.delete(id);
-  }
-
-  crearJugador(uid: string, jugador: JUGADOR) {
+  crearJugador(uid: string, jugador: jugador) {
     console.log("🧍 Jugador creado:", uid, jugador);
     this.jugadoresEnMapa.set(uid, jugador);
+    this.jugadoresEnMapa = new Map(this.jugadoresEnMapa);
   }
 
   borrarJugador(uid: string) {
     console.log("🚫 Jugador eliminado:", uid);
     this.jugadoresEnMapa.delete(uid);
+    this.jugadoresEnMapa = new Map(this.jugadoresEnMapa);
   }
 
-  actualizarSeteoJugador(uid: string, nuevoSeteo: JUGADOR['seteo']) {
+  actualizarSeteoJugador(uid: string, nuevoSeteo: jugador['seteo']) {
     console.log("🎨 Seteo actualizado:", uid, nuevoSeteo);
     const jugador = this.jugadoresEnMapa.get(uid);
     if (jugador) {
       jugador.seteo = nuevoSeteo;
-      this.jugadoresEnMapa.set(uid, jugador);
+      this.jugadoresEnMapa = new Map(this.jugadoresEnMapa);
     }
   }
 
-  actualizarPosJugador(uid: string, nuevaPos: JUGADOR['POS']) {
+  actualizarPosJugador(uid: string, nuevaPos: jugador['pos']) {
     console.log("📍 Posición actualizada:", uid, nuevaPos);
     const jugador = this.jugadoresEnMapa.get(uid);
     if (jugador) {
-      jugador.POS = nuevaPos;
-      this.jugadoresEnMapa.set(uid, jugador);
+      jugador.pos = nuevaPos;
+      this.jugadoresEnMapa = new Map(this.jugadoresEnMapa);
     }
   }
 
@@ -76,8 +70,40 @@ export class TestsuscripPage implements OnInit {
     console.log("⭐ Puntos actualizados:", uid, nuevosPuntos);
     const jugador = this.jugadoresEnMapa.get(uid);
     if (jugador) {
-      jugador.PUNTOS = nuevosPuntos;
-      this.jugadoresEnMapa.set(uid, jugador);
+      jugador.puntos = nuevosPuntos;
+      this.jugadoresEnMapa = new Map(this.jugadoresEnMapa);
     }
+  }
+
+  // ========= BALLS =========
+
+  crearBall(id: string, data: ball) {
+    console.log("🟢 Ball creada:", id, data);
+    this.ballsEnMapa.set(id, data);
+    this.ballsEnMapa = new Map(this.ballsEnMapa);
+  }
+
+  borrarBall(id: string) {
+    console.log("🔴 Ball eliminada:", id);
+    this.ballsEnMapa.delete(id);
+    this.ballsEnMapa = new Map(this.ballsEnMapa);
+  }
+
+  // ========= GETTERS PARA EL TEMPLATE =========
+
+  get jugadoresArray(): [string, jugador][] {
+    return Array.from(this.jugadoresEnMapa.entries());
+  }
+
+  get ballsArray(): [string, ball][] {
+    return Array.from(this.ballsEnMapa.entries());
+  }
+
+  trackByUid(index: number, item: [string, jugador]) {
+    return item[0];
+  }
+
+  trackByBallId(index: number, item: [string, ball]) {
+    return item[0];
   }
 }
