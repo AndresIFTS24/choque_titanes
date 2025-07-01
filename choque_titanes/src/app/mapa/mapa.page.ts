@@ -25,6 +25,13 @@ import { fromLonLat } from 'ol/proj';
 import { Geometry } from 'ol/geom';
 import { Subscription } from 'rxjs'; // Importamos Subscription
 import { MapaBridgeService } from '../services/mapa-bridge.service.';
+import { AuthService } from '../services/auth.service';
+
+
+import { IonHeader, IonToolbar, IonTitle, IonContent, IonButton, ModalController } from '@ionic/angular/standalone';
+import { UrlSeguraPipe } from '../pipes/url-segura.pipe';
+import { JugadoresComponent } from '../jugadores/jugadores.component';
+
 @Component({
   standalone: true,
   selector: 'app-mapa',
@@ -37,8 +44,8 @@ export class MapaPage implements OnInit, OnDestroy, AfterViewInit {
   longitud: number | null = null;
   error: string | null = null;
   private intervaloId: any;
-private jugadoresEnMapa: globalThis.Map<string, jugador> = new globalThis.Map();
-private ballsEnMapa: globalThis.Map<string, ball> = new globalThis.Map();
+  private jugadoresEnMapa: globalThis.Map<string, jugador> = new globalThis.Map();
+  private ballsEnMapa: globalThis.Map<string, ball> = new globalThis.Map();
   // Propiedades de OpenLayers
   private mapa!: Map;
   private vectorSource!: VectorSource<Feature<Geometry>>;
@@ -47,10 +54,11 @@ private ballsEnMapa: globalThis.Map<string, ball> = new globalThis.Map();
   private ballsSubscription!: Subscription; // Para gestionar la suscripción de las bolas
 
   constructor(
-
-    private firebaseService: FirebaseDbService,
+    private authService: AuthService,
+    public firebaseService: FirebaseDbService,
     private mapaBridge: MapaBridgeService,
-    private ngZone: NgZone
+    private ngZone: NgZone,
+    private modalCtrl: ModalController
   ) { }
 
   ngOnInit() {
@@ -69,8 +77,18 @@ private ballsEnMapa: globalThis.Map<string, ball> = new globalThis.Map();
         this.obtenerUbicacionYCrearMapa();
       }, 100);
     });
+
   }
 
+  getAvatarUrl(icono: number): string {
+    return `assets/icon/avatar-${icono}.png`; // Ajustá la ruta según tu carpeta de íconos
+  }
+
+  
+  //boton Logout
+  cerrarSesion(){
+    this.authService.cerrarSesion();
+  }
 
   crearBall(id: string, data: ball) {
     console.log("🟢 Ball creada:", id, data);
