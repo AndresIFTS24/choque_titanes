@@ -11,7 +11,7 @@ import { Geolocation } from '@capacitor/geolocation';
 import { FirebaseDbService } from '../services/firebase-db.service';
 import { ball } from '../services/models';
 import { jugador } from '../services/models';
-import { Map } from 'ol'; 
+import OlMap from 'ol/Map';
 // Importaciones de OpenLayers
 import { View } from 'ol';
 import TileLayer from 'ol/layer/Tile';
@@ -24,7 +24,7 @@ import VectorLayer from 'ol/layer/Vector';
 import { fromLonLat } from 'ol/proj';
 import { Geometry } from 'ol/geom';
 import { Subscription } from 'rxjs'; // Importamos Subscription
-import { MapaBridgeService } from '../services/mapa-bridge.service.';
+import { MapaBridgeService } from '../services/mapa-bridge.service';
 import { AuthService } from '../services/auth.service';
 
 
@@ -47,11 +47,12 @@ export class MapaPage implements OnInit, OnDestroy, AfterViewInit {
   private jugadoresEnMapa: globalThis.Map<string, jugador> = new globalThis.Map();
   private ballsEnMapa: globalThis.Map<string, ball> = new globalThis.Map();
   // Propiedades de OpenLayers
-  private mapa!: Map;
+  private mapa!: OlMap;
   private vectorSource!: VectorSource<Feature<Geometry>>;
   private jugadorFeature!: Feature<Point>;
   private ballsFeatures: globalThis.Map<string, Feature<Point>> = new globalThis.Map<string, Feature<Point>>();
   private ballsSubscription!: Subscription; // Para gestionar la suscripción de las bolas
+  private jugadoresFeatures: Map<string, Feature<Point>> = new Map();
 
   constructor(
     private authService: AuthService,
@@ -64,7 +65,8 @@ export class MapaPage implements OnInit, OnDestroy, AfterViewInit {
   ngOnInit() {
     // Solo conectamos al servicio Firebase aquí.
     // La suscripción a las bolas se hará una vez que el mapa esté listo.
-    this.firebaseService.Conectar_al_Mapa();
+   
+
     this.mapaBridge.crearBall = this.crearBall.bind(this);
     this.mapaBridge.borrarBall = this.borrarBall.bind(this);
     this.mapaBridge.crear_jugador = this.crearJugador.bind(this);
@@ -72,12 +74,15 @@ export class MapaPage implements OnInit, OnDestroy, AfterViewInit {
     this.mapaBridge.modjugador_seteo = this.actualizarSeteoJugador.bind(this);
     this.mapaBridge.modjugador_POS = this.actualizarPosJugador.bind(this);
     this.mapaBridge.modjugador_puntos = this.actualizarPuntosJugador.bind(this);
-        this.ngZone.runOutsideAngular(() => {
+
+
+    
+
+    this.ngZone.runOutsideAngular(() => {
       setTimeout(() => {
         this.obtenerUbicacionYCrearMapa();
       }, 100);
     });
-
   }
 
   getAvatarUrl(icono: number): string {
@@ -90,25 +95,87 @@ export class MapaPage implements OnInit, OnDestroy, AfterViewInit {
     this.authService.cerrarSesion();
   }
 
-  crearBall(id: string, data: ball) {
-    console.log("🟢 Ball creada:", id, data);
-    this.ballsEnMapa.set(id, data);
-  }
+crearBall(id: string, data: ball) {
+  console.log("🟢 Ball creada:", id, data);
 
-  borrarBall(id: string) {
-    console.log("🔴 Ball eliminada:", id);
-    this.ballsEnMapa.delete(id);
-  }
+  if (!this.mapa || !this.vectorSource) return;
 
-  crearJugador(uid: string, jugador: jugador) {
-    console.log("🧍 Jugador creado:", uid, jugador);
-    this.jugadoresEnMapa.set(uid, jugador);
-  }
+  const coordenadaBall = fromLonLat([data.long, data.lat]);
 
-  borrarJugador(uid: string) {
-    console.log("🚫 Jugador eliminado:", uid);
-    this.jugadoresEnMapa.delete(uid);
+  const ballFeature = new Feature({
+    geometry: new Point(coordenadaBall),
+  });
+
+  ballFeature.setStyle(new Style({
+    image: new Icon({
+      src: 'assets/icon/ball.png',
+      scale: 0.07,
+      anchor: [0.5, 1],
+      anchorXUnits: 'fraction',
+      anchorYUnits: 'fraction',
+      crossOrigin: 'anonymous'
+    }),
+  }));
+
+  this.vectorSource.addFeature(ballFeature);
+  this.ballsFeatures.set(id, ballFeature);
+}
+
+borrarBall(id: string) {
+  console.log("🔴 Ball eliminada:", id);
+
+  const ballFeature = this.ballsFeatures.get(id);
+  if (ballFeature && this.vectorSource) {
+    this.vectorSource.removeFeature(ballFeature);
+    this.ballsFeatures.delete(id);
   }
+}
+
+
+crearJugador(uid: string, jugador: jugador) {
+  console.log("🧍 Jugador creado:", uid, jugador);
+  this.jugadoresEnMapa.set(uid, jugador);
+
+  if (!this.vectorSource) return;
+
+  const coord = fromLonLat([jugador.pos.long, jugador.pos.lat]);
+
+  const feature = new Feature({
+    geometry: new Point(coord)
+  });
+
+  const iconoUrl = this.getAvatarUrl(jugador.seteo.icono); // usa tu método
+
+  const color = jugador.seteo?.color;
+  const colorHex = (typeof color === 'string') ? color.toLowerCase() : '#000000';
+
+
+  feature.setStyle(new Style({
+    image: new Icon({
+      src: iconoUrl,
+      scale: 0.08,
+      anchor: [0.5, 1],
+      anchorXUnits: 'fraction',
+      anchorYUnits: 'fraction',
+      crossOrigin: 'anonymous',
+      color: colorHex // Esto aplica un tinte si la imagen lo permite (transparentes)
+    }),
+  }));
+
+  this.vectorSource.addFeature(feature);
+  this.jugadoresFeatures.set(uid, feature);
+}
+
+borrarJugador(uid: string) {
+  console.log("🚫 Jugador eliminado:", uid);
+  this.jugadoresEnMapa.delete(uid);
+
+  const feature = this.jugadoresFeatures.get(uid);
+  if (feature && this.vectorSource) {
+    this.vectorSource.removeFeature(feature);
+    this.jugadoresFeatures.delete(uid);
+  }
+}
 
   actualizarSeteoJugador(uid: string, nuevoSeteo: jugador['seteo']) {
     console.log("🎨 Seteo actualizado:", uid, nuevoSeteo);
@@ -125,8 +192,14 @@ export class MapaPage implements OnInit, OnDestroy, AfterViewInit {
     if (jugador) {
       jugador.pos = nuevaPos;
       this.jugadoresEnMapa.set(uid, jugador);
+
+      const feature = this.jugadoresFeatures.get(uid);
+      if (feature) {
+        const newCoord = fromLonLat([nuevaPos.long, nuevaPos.lat]);
+        (feature.getGeometry() as Point).setCoordinates(newCoord);
+      }
     }
-  }
+}
 
   actualizarPuntosJugador(uid: string, nuevosPuntos: number) {
     console.log("⭐ Puntos actualizados:", uid, nuevosPuntos);
@@ -181,6 +254,7 @@ export class MapaPage implements OnInit, OnDestroy, AfterViewInit {
       this.error = 'No se pudo obtener la ubicación: ' + err.message;
       console.error('Error al obtener ubicación:', err);
     }
+    this.firebaseService.Conectar_al_Mapa();
   }
 
   private inicializarMapa(lat: number, lng: number) {
@@ -202,7 +276,7 @@ export class MapaPage implements OnInit, OnDestroy, AfterViewInit {
       source: this.vectorSource,
     });
 
-    this.mapa = new Map({
+    this.mapa = new OlMap({
       target: elemento,
       layers: [
         new TileLayer({
@@ -240,13 +314,13 @@ export class MapaPage implements OnInit, OnDestroy, AfterViewInit {
 
   }
 
-private actualizarBolasEnMapa(bolas: globalThis.Map<string, ball>) {
+private actualizarBolasEnMapa() {
   if (!this.mapa || !this.vectorSource) {
     console.warn('Mapa o vectorSource no inicializado, no se pueden actualizar las bolas.');
     return;
   }
 
-  bolas.forEach((ball: ball, id: string) => {
+  this.firebaseService.listaBalls.forEach((ball: ball, id: string) => {
     // Verifica que 'lat', 'long' y 'owner' sean válidos
     if (typeof ball.lat === 'number' && !isNaN(ball.lat) &&
         typeof ball.long === 'number' && !isNaN(ball.long) &&
@@ -290,13 +364,14 @@ private actualizarBolasEnMapa(bolas: globalThis.Map<string, ball>) {
       return;
     }
 
-    this.detenerActualizacion();
+    //this.detenerActualizacion();
 
     this.actualizarPosicion(); // Llama una vez inmediatamente
 
     this.intervaloId = setInterval(() => {
       this.actualizarPosicion();
       this.verificarColisiones();
+
     }, 1000);
     console.log('Actualización de ubicación y bolas iniciada.');
   }
@@ -330,6 +405,10 @@ private actualizarBolasEnMapa(bolas: globalThis.Map<string, ball>) {
         //   const playerCoordinates = (this.jugadorFeature.getGeometry() as Point).getCoordinates();
         //   this.mapa.getView().setCenter(playerCoordinates);
         // }
+
+        this.firebaseService.crearBall(nuevaLat,nuevaLong);
+
+
       }
     } catch (err: any) {
       this.error = 'Error al obtener la ubicación: ' + err.message;
@@ -374,18 +453,34 @@ private actualizarBolasEnMapa(bolas: globalThis.Map<string, ball>) {
         const distancia = this.calcularDistancia(this.latitud!, this.longitud!, ball.lat, ball.long);
         const radioColisionMetros = 5;
         if (distancia < radioColisionMetros && ball.owner !== this.firebaseService.authid) {
-          this.firebaseService.eliminarBall(id);
-          if (this.firebaseService.jugadorActual) {
-            this.firebaseService.jugadorActual.puntos += 1;
-            this.firebaseService.setPuntos(this.firebaseService.jugadorActual.puntos);
-            console.log(`¡Colisión! Puntos: ${this.firebaseService.jugadorActual.puntos}`);
-          }
+          
+          // Si hay colisión, consumimos la bola
+          this.ConsumirBall(id);
+
         }
       } else {
         console.warn(`⚠️ BALL con ID ${id} tiene lat/long inválidos o falta OWNER para colisión:`, ball);
       }
     });
   }
+
+  ConsumirBall(id: string) {
+    // Elimina la BALL de la base de datos
+    this.firebaseService.eliminarBall(id);
+
+    // Verifica que el jugador esté definido antes de sumar puntos
+    if (this.firebaseService.jugadorActual) {
+      // Suma un punto al jugador local
+      this.firebaseService.jugadorActual.puntos += 1;
+
+      // Actualiza los puntos en la base de datos
+      this.firebaseService.setPuntos(this.firebaseService.jugadorActual.puntos);
+
+      // Log para debug
+      console.log(`¡Colisión con BALL ${id},  Puntos: ${this.firebaseService.jugadorActual.puntos}`);
+    }
+  }
+
 
   calcularDistancia(lat1: number, lon1: number, lat2: number, lon2: number): number {
     const R = 6371e3; // Radio de la Tierra en metros

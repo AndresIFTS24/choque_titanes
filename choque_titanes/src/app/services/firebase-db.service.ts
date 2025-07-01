@@ -38,7 +38,7 @@ export class FirebaseDbService {
     this.setOnline();
     this.subscribeToOnlineUsers();
     this.subscribeToBalls();
-
+    console.log("🔔 Realizando suscripciones iniciales")
   }
   //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
   //            MANJEO DEL NODO ONLINE
@@ -252,7 +252,7 @@ export class FirebaseDbService {
       const id = snapshot.key!;
       const ballData = snapshot.val();
 
-      if (ballData && ballData.lat !== undefined && ballData.long !== undefined && ballData.OWNER) {
+      if (ballData && ballData.lat !== undefined && ballData.long !== undefined) {
         this.listaBalls.set(id, ballData);
         console.log(`🟢 BALL agregada [${id}]:`, ballData);
         this.mapaBridge.crearBall?.(id,ballData);
