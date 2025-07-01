@@ -13,6 +13,7 @@ export interface JUGADOR {
   SETEO: SETEO;
   POS: POS;
   PUNTOS: number;
+  
 }
 
 export interface BALL {

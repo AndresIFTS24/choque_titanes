@@ -10,9 +10,10 @@ import { IonicModule } from '@ionic/angular';
 import { Geolocation } from '@capacitor/geolocation';
 import { FirebaseDbService } from '../services/firebase-db.service';
 import { BALL } from '../services/models';
-
+import { JUGADOR } from '../services/models';
+import { Map } from 'ol'; 
 // Importaciones de OpenLayers
-import { Map, View } from 'ol';
+import { View } from 'ol';
 import TileLayer from 'ol/layer/Tile';
 import OSM from 'ol/source/OSM';
 import Feature from 'ol/Feature';
@@ -23,7 +24,7 @@ import VectorLayer from 'ol/layer/Vector';
 import { fromLonLat } from 'ol/proj';
 import { Geometry } from 'ol/geom';
 import { Subscription } from 'rxjs'; // Importamos Subscription
-
+import { MapaBridgeService } from '../services/mapa-bridge.service.';
 @Component({
   standalone: true,
   selector: 'app-mapa',
@@ -36,7 +37,8 @@ export class MapaPage implements OnInit, OnDestroy, AfterViewInit {
   longitud: number | null = null;
   error: string | null = null;
   private intervaloId: any;
-
+private jugadoresEnMapa: globalThis.Map<string, JUGADOR> = new globalThis.Map();
+private ballsEnMapa: globalThis.Map<string, BALL> = new globalThis.Map();
   // Propiedades de OpenLayers
   private mapa!: Map;
   private vectorSource!: VectorSource<Feature<Geometry>>;
@@ -45,7 +47,9 @@ export class MapaPage implements OnInit, OnDestroy, AfterViewInit {
   private ballsSubscription!: Subscription; // Para gestionar la suscripción de las bolas
 
   constructor(
+
     private firebaseService: FirebaseDbService,
+    private mapaBridge: MapaBridgeService,
     private ngZone: NgZone
   ) { }
 
@@ -53,6 +57,66 @@ export class MapaPage implements OnInit, OnDestroy, AfterViewInit {
     // Solo conectamos al servicio Firebase aquí.
     // La suscripción a las bolas se hará una vez que el mapa esté listo.
     this.firebaseService.Conectar_al_Mapa();
+    this.mapaBridge.crearBall = this.crearBall.bind(this);
+    this.mapaBridge.borrarBall = this.borrarBall.bind(this);
+    this.mapaBridge.crear_jugador = this.crearJugador.bind(this);
+    this.mapaBridge.borrarJugador = this.borrarJugador.bind(this);
+    this.mapaBridge.modjugador_seteo = this.actualizarSeteoJugador.bind(this);
+    this.mapaBridge.modjugador_POS = this.actualizarPosJugador.bind(this);
+    this.mapaBridge.modjugador_puntos = this.actualizarPuntosJugador.bind(this);
+        this.ngZone.runOutsideAngular(() => {
+      setTimeout(() => {
+        this.obtenerUbicacionYCrearMapa();
+      }, 100);
+    });
+  }
+
+
+  crearBall(id: string, data: BALL) {
+    console.log("🟢 Ball creada:", id, data);
+    this.ballsEnMapa.set(id, data);
+  }
+
+  borrarBall(id: string) {
+    console.log("🔴 Ball eliminada:", id);
+    this.ballsEnMapa.delete(id);
+  }
+
+  crearJugador(uid: string, jugador: JUGADOR) {
+    console.log("🧍 Jugador creado:", uid, jugador);
+    this.jugadoresEnMapa.set(uid, jugador);
+  }
+
+  borrarJugador(uid: string) {
+    console.log("🚫 Jugador eliminado:", uid);
+    this.jugadoresEnMapa.delete(uid);
+  }
+
+  actualizarSeteoJugador(uid: string, nuevoSeteo: JUGADOR['SETEO']) {
+    console.log("🎨 Seteo actualizado:", uid, nuevoSeteo);
+    const jugador = this.jugadoresEnMapa.get(uid);
+    if (jugador) {
+      jugador.SETEO = nuevoSeteo;
+      this.jugadoresEnMapa.set(uid, jugador);
+    }
+  }
+
+  actualizarPosJugador(uid: string, nuevaPos: JUGADOR['POS']) {
+    console.log("📍 Posición actualizada:", uid, nuevaPos);
+    const jugador = this.jugadoresEnMapa.get(uid);
+    if (jugador) {
+      jugador.POS = nuevaPos;
+      this.jugadoresEnMapa.set(uid, jugador);
+    }
+  }
+
+  actualizarPuntosJugador(uid: string, nuevosPuntos: number) {
+    console.log("⭐ Puntos actualizados:", uid, nuevosPuntos);
+    const jugador = this.jugadoresEnMapa.get(uid);
+    if (jugador) {
+      jugador.PUNTOS = nuevosPuntos;
+      this.jugadoresEnMapa.set(uid, jugador);
+    }
   }
 
   ngAfterViewInit() {
@@ -164,55 +228,49 @@ export class MapaPage implements OnInit, OnDestroy, AfterViewInit {
     console.log('Suscripción a obsBalls activada después de inicializar mapa.');
   }
 
-  private actualizarBolasEnMapa(bolas: globalThis.Map<string, BALL>) {
-    if (!this.mapa || !this.vectorSource) {
-      // Este console.warn ya no debería aparecer con la lógica corregida
-      console.warn('Mapa o vectorSource no inicializado, no se pueden actualizar las bolas. (Este mensaje no debería verse)');
-      return;
-    }
-
-    // Primero, elimina las bolas del mapa que ya no existen en los datos de Firebase
-    this.ballsFeatures.forEach((feature: Feature<Point>, id: string) => {
-      if (!bolas.has(id)) {
-        this.vectorSource.removeFeature(feature);
-        this.ballsFeatures.delete(id);
-      }
-    });
-
-    // Luego, añade o actualiza las bolas restantes
-    bolas.forEach((ball: BALL, id: string) => {
-      const existente = this.ballsFeatures.get(id);
-      // Aseguramos que lat, long y OWNER existan y sean números válidos para lat/long
-      if (typeof ball.lat === 'number' && typeof ball.long === 'number' && ball.OWNER) {
-        const coordenadaBall = fromLonLat([ball.long, ball.lat]);
-        if (existente) {
-          (existente.getGeometry() as Point).setCoordinates(coordenadaBall);
-          console.log(`✅ Bola ID: ${id} actualizada en el vectorSource.`); // Log para bolas actualizadas
-        } else {
-          const ballFeature = new Feature({
-            geometry: new Point(coordenadaBall),
-          });
-          // CAMBIO IMPORTANTE AQUÍ: Usando un icono externo para la bola
-          ballFeature.setStyle(new Style({
-            image: new Icon({
-              src: 'assets/icon/ball.png',
-              scale: 0.07, // Ajustá este valor según el tamaño real del PNG
-              anchor: [0.5, 1],
-              anchorXUnits: 'fraction',
-              anchorYUnits: 'fraction',
-              crossOrigin: 'anonymous'
-            }),
-          }));
-          this.vectorSource.addFeature(ballFeature);
-          this.ballsFeatures.set(id, ballFeature);
-          console.log(`✅ Bola ID: ${id} añadida al vectorSource.`); // Log para bolas añadidas
-        }
-      } else {
-        // Mejoramos el mensaje de advertencia para indicar qué falta
-        console.warn(`⚠️ BALL inválida ignorada (ID: ${id}): falta lat/long válidos o OWNER.`, ball);
-      }
-    });
+private actualizarBolasEnMapa(bolas: globalThis.Map<string, BALL>) {
+  if (!this.mapa || !this.vectorSource) {
+    console.warn('Mapa o vectorSource no inicializado, no se pueden actualizar las bolas.');
+    return;
   }
+
+  bolas.forEach((ball: BALL, id: string) => {
+    // Verifica que 'lat', 'long' y 'owner' sean válidos
+    if (typeof ball.lat === 'number' && !isNaN(ball.lat) &&
+        typeof ball.long === 'number' && !isNaN(ball.long) &&
+        ball.OWNER && ball.OWNER !== '') {
+
+      const coordenadaBall = fromLonLat([ball.long, ball.lat]);
+
+      // Verifica si la bola ya existe
+      const existente = this.ballsFeatures.get(id);
+      if (existente) {
+        (existente.getGeometry() as Point).setCoordinates(coordenadaBall);
+        console.log(`✅ Bola ID: ${id} actualizada.`);
+      } else {
+        const ballFeature = new Feature({
+          geometry: new Point(coordenadaBall),
+        });
+        ballFeature.setStyle(new Style({
+          image: new Icon({
+            src: 'assets/icon/ball.png',
+            scale: 0.07,
+            anchor: [0.5, 1],
+            anchorXUnits: 'fraction',
+            anchorYUnits: 'fraction',
+            crossOrigin: 'anonymous'
+          }),
+        }));
+        this.vectorSource.addFeature(ballFeature);
+        this.ballsFeatures.set(id, ballFeature);
+        console.log(`✅ Bola ID: ${id} añadida.`);
+      }
+    } else {
+      console.warn(`⚠️ BALL inválida ignorada (ID: ${id}):`, ball);
+    }
+  });
+}
+
 
   iniciarActualizacionContinua() {
     if (!this.mapa) {

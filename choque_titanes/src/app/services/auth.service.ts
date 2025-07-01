@@ -44,7 +44,10 @@ export class AuthService {
     this.router.navigate(['/login'])
   }
 
+  
+
   estaLogueado():boolean {
     return !!this.usuarioActual && this.usuarioActual.emailVerified
   }
+  
 }
