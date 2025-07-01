@@ -417,4 +417,34 @@ private actualizarBolasEnMapa(bolas: globalThis.Map<string, ball>) {
       }));
     }
   }
+
+
+
+
+    async editarPerfil() {
+    const modal = await this.modalCtrl.create({
+      component: JugadoresComponent,
+      componentProps: {
+        nickActual: this.firebaseService.jugadorActual?.seteo.nick,
+        colorActual: this.firebaseService.jugadorActual?.seteo.color,
+        iconoActual: this.firebaseService.jugadorActual?.seteo.icono 
+      },
+      backdropDismiss: false,
+      breakpoints: [0, 0.5, 0.9],
+      initialBreakpoint: 0.9
+    });
+
+    await modal.present();
+
+    const { data, role } = await modal.onWillDismiss();
+    console.log(data);
+    if (role === 'confirm') {
+      // Actualizar jugador después de la edición
+      const user = this.authService.getUsuarioActual();
+      if (user) {
+        const perfilActualizado = await this.firebaseService.obtenerPerfil(user.uid);
+        this.firebaseService.jugadorActual = perfilActualizado;
+      }
+    }
+}
 }
