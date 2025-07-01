@@ -1,67 +1,35 @@
-<ion-header [translucent]="true">
+<ion-header>
   <ion-toolbar>
-    <ion-title>
-      Mapa de jugadores
-    </ion-title>
-    <ion-button color="danger" slot="end" (click)="cerrarSesion()">Logout</ion-button> 
+    <ion-title>Mapa de jugadores</ion-title>
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true">
-  <!-- Boton para obtener ubicacion -->
-  <ion-button (click)="obtenerPosicionActual()">Obtener ubicacion del jugador</ion-button>
-  
-  <!-- Si existen latitud y longitud, las muestro-->
+<ion-content fullscreen>
+  <div id="mapa" class="mapa-container"></div>
 
-    @if(latitud && longitud){
-    
-    <p>Latitud: {{latitud}}</p>
-    <p>Longitud: {{longitud}}</p>
-  
-  }
-  <!-- Si hay un error y no hay coordenadas, mostrar mensaje de error -->
-    @else if(error){
-    
-      <p class="ion-text-danger">{{error}}</p>
+  <div class="overlay-controls">
+    <ion-grid class="map-controls">
+      <ion-row>
+        <ion-col size="6">
+          <ion-button expand="block" color="primary" (click)="iniciarActualizacionContinua()">
+            Reanudar
+          </ion-button>
+        </ion-col>
+        <ion-col size="6">
+          <ion-button expand="block" color="danger" (click)="detenerActualizacion()">
+            Pausa
+          </ion-button>
+        </ion-col>
+      </ion-row>
+    </ion-grid>
 
-    }
-    
-    @if(googleMapsUrl){
-    
-      <iframe [src]="googleMapsUrl |urlSegura" class="mapa-iframe" title="Mapa de ubicación en Google Maps"></iframe>
-      
-    }
-    
-    @else {
+    <div class="coordenadas" *ngIf="latitud !== null && longitud !== null">
+      <p>📍 Latitud: {{ latitud }}</p>
+      <p>📍 Longitud: {{ longitud }}</p>
+    </div>
 
-      <p class="mensaje-espera">Aun no se ha obtenido la ubicacion</p>
-
-    }
-@if (jugador) {
-  <ion-card>
-    <ion-card-header>
-      <p style="    font-size: 1.6rem;
-    font-weight: bold;
-    text-align: center;
-    margin-bottom: 30 px;
-    color:#8ade86;">🛡️¡Bienvenido Titán!</p> 
-      <ion-card-title [style.color]="jugador.seteo.color">
-        {{ jugador.seteo.nick }}</ion-card-title>
-    </ion-card-header>
-    <ion-card-content>
-      <img
-        [src]="getAvatarUrl(jugador.seteo.icono)"
-        alt="Avatar"
-        width="100"
-        [style.border]="'5px solid ' + jugador.seteo.color"
-        style="border-radius: 50%;"
-      />
-    </ion-card-content>
-  </ion-card>
-  <ion-button id="btnEditar" expand="full" color="primary" (click)="editarPerfil()">
-  Configurar PJ
-</ion-button>
-}
-
-  <!-- <app-jugadores></app-jugadores> -->
+    <div class="error-message" *ngIf="(latitud === null || longitud === null) && error">
+      <p class="ion-text-danger">{{ error }}</p>
+    </div>
+  </div>
 </ion-content>
