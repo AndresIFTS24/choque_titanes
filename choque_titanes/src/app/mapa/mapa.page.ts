@@ -9,8 +9,8 @@ import { CommonModule } from '@angular/common';
 import { IonicModule } from '@ionic/angular';
 import { Geolocation } from '@capacitor/geolocation';
 import { FirebaseDbService } from '../services/firebase-db.service';
-import { BALL } from '../services/models';
-import { JUGADOR } from '../services/models';
+import { ball } from '../services/models';
+import { jugador } from '../services/models';
 import { Map } from 'ol'; 
 // Importaciones de OpenLayers
 import { View } from 'ol';
@@ -37,8 +37,8 @@ export class MapaPage implements OnInit, OnDestroy, AfterViewInit {
   longitud: number | null = null;
   error: string | null = null;
   private intervaloId: any;
-private jugadoresEnMapa: globalThis.Map<string, JUGADOR> = new globalThis.Map();
-private ballsEnMapa: globalThis.Map<string, BALL> = new globalThis.Map();
+private jugadoresEnMapa: globalThis.Map<string, jugador> = new globalThis.Map();
+private ballsEnMapa: globalThis.Map<string, ball> = new globalThis.Map();
   // Propiedades de OpenLayers
   private mapa!: Map;
   private vectorSource!: VectorSource<Feature<Geometry>>;
@@ -72,7 +72,7 @@ private ballsEnMapa: globalThis.Map<string, BALL> = new globalThis.Map();
   }
 
 
-  crearBall(id: string, data: BALL) {
+  crearBall(id: string, data: ball) {
     console.log("🟢 Ball creada:", id, data);
     this.ballsEnMapa.set(id, data);
   }
@@ -82,7 +82,7 @@ private ballsEnMapa: globalThis.Map<string, BALL> = new globalThis.Map();
     this.ballsEnMapa.delete(id);
   }
 
-  crearJugador(uid: string, jugador: JUGADOR) {
+  crearJugador(uid: string, jugador: jugador) {
     console.log("🧍 Jugador creado:", uid, jugador);
     this.jugadoresEnMapa.set(uid, jugador);
   }
@@ -92,20 +92,20 @@ private ballsEnMapa: globalThis.Map<string, BALL> = new globalThis.Map();
     this.jugadoresEnMapa.delete(uid);
   }
 
-  actualizarSeteoJugador(uid: string, nuevoSeteo: JUGADOR['SETEO']) {
+  actualizarSeteoJugador(uid: string, nuevoSeteo: jugador['seteo']) {
     console.log("🎨 Seteo actualizado:", uid, nuevoSeteo);
     const jugador = this.jugadoresEnMapa.get(uid);
     if (jugador) {
-      jugador.SETEO = nuevoSeteo;
+      jugador.seteo = nuevoSeteo;
       this.jugadoresEnMapa.set(uid, jugador);
     }
   }
 
-  actualizarPosJugador(uid: string, nuevaPos: JUGADOR['POS']) {
+  actualizarPosJugador(uid: string, nuevaPos: jugador['pos']) {
     console.log("📍 Posición actualizada:", uid, nuevaPos);
     const jugador = this.jugadoresEnMapa.get(uid);
     if (jugador) {
-      jugador.POS = nuevaPos;
+      jugador.pos = nuevaPos;
       this.jugadoresEnMapa.set(uid, jugador);
     }
   }
@@ -114,7 +114,7 @@ private ballsEnMapa: globalThis.Map<string, BALL> = new globalThis.Map();
     console.log("⭐ Puntos actualizados:", uid, nuevosPuntos);
     const jugador = this.jugadoresEnMapa.get(uid);
     if (jugador) {
-      jugador.PUNTOS = nuevosPuntos;
+      jugador.puntos = nuevosPuntos;
       this.jugadoresEnMapa.set(uid, jugador);
     }
   }
@@ -220,25 +220,19 @@ private ballsEnMapa: globalThis.Map<string, BALL> = new globalThis.Map();
     // Forzar el centrado del mapa en el jugador al inicio
     this.mapa.getView().setCenter(coordenadaInicial);
 
-    this.ballsSubscription = this.firebaseService.obsBalls.subscribe((bolas: globalThis.Map<string, BALL>) => {
-      this.ngZone.run(() => {
-        this.actualizarBolasEnMapa(bolas);
-      });
-    });
-    console.log('Suscripción a obsBalls activada después de inicializar mapa.');
   }
 
-private actualizarBolasEnMapa(bolas: globalThis.Map<string, BALL>) {
+private actualizarBolasEnMapa(bolas: globalThis.Map<string, ball>) {
   if (!this.mapa || !this.vectorSource) {
     console.warn('Mapa o vectorSource no inicializado, no se pueden actualizar las bolas.');
     return;
   }
 
-  bolas.forEach((ball: BALL, id: string) => {
+  bolas.forEach((ball: ball, id: string) => {
     // Verifica que 'lat', 'long' y 'owner' sean válidos
     if (typeof ball.lat === 'number' && !isNaN(ball.lat) &&
         typeof ball.long === 'number' && !isNaN(ball.long) &&
-        ball.OWNER && ball.OWNER !== '') {
+        ball.owner && ball.owner !== '') {
 
       const coordenadaBall = fromLonLat([ball.long, ball.lat]);
 
@@ -358,15 +352,15 @@ private actualizarBolasEnMapa(bolas: globalThis.Map<string, BALL>) {
 
     this.firebaseService.listaBalls.forEach((ball, id) => {
       // Aseguramos que lat, long y OWNER existan y sean números válidos para lat/long
-      if (typeof ball.lat === 'number' && typeof ball.long === 'number' && ball.OWNER) {
+      if (typeof ball.lat === 'number' && typeof ball.long === 'number' && ball.owner) {
         const distancia = this.calcularDistancia(this.latitud!, this.longitud!, ball.lat, ball.long);
         const radioColisionMetros = 5;
-        if (distancia < radioColisionMetros && ball.OWNER !== this.firebaseService.authid) {
+        if (distancia < radioColisionMetros && ball.owner !== this.firebaseService.authid) {
           this.firebaseService.eliminarBall(id);
           if (this.firebaseService.jugadorActual) {
-            this.firebaseService.jugadorActual.PUNTOS += 1;
-            this.firebaseService.setPuntos(this.firebaseService.jugadorActual.PUNTOS);
-            console.log(`¡Colisión! Puntos: ${this.firebaseService.jugadorActual.PUNTOS}`);
+            this.firebaseService.jugadorActual.puntos += 1;
+            this.firebaseService.setPuntos(this.firebaseService.jugadorActual.puntos);
+            console.log(`¡Colisión! Puntos: ${this.firebaseService.jugadorActual.puntos}`);
           }
         }
       } else {
