@@ -535,7 +535,7 @@ actualizarPuntosJugador(uid: string, nuevosPuntos: number) {
 
       // Actualiza los puntos en la base de datos
       this.firebaseService.setPuntos(this.firebaseService.jugadorActual.puntos);
-      this.vibracion.vibrarLigero(); 
+      this.vibracion.vibrarFuerte(); 
       // Log para debug
       console.log(`¡Colisión con BALL ${id},  Puntos: ${this.firebaseService.jugadorActual.puntos}`);
     }
