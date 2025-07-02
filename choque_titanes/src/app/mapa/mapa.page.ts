@@ -18,7 +18,7 @@ import TileLayer from 'ol/layer/Tile';
 import OSM from 'ol/source/OSM';
 import Feature from 'ol/Feature';
 import Point from 'ol/geom/Point';
-import { Icon, Style } from 'ol/style';
+
 import VectorSource from 'ol/source/Vector';
 import VectorLayer from 'ol/layer/Vector';
 import { fromLonLat } from 'ol/proj';
@@ -31,6 +31,10 @@ import { AuthService } from '../services/auth.service';
 import { IonHeader, IonToolbar, IonTitle, IonContent, IonButton, ModalController } from '@ionic/angular/standalone';
 import { UrlSeguraPipe } from '../pipes/url-segura.pipe';
 import { JugadoresComponent } from '../jugadores/jugadores.component';
+
+import { Style, Icon, Circle as CircleStyle, Fill, Stroke, Text } from 'ol/style';
+import { VibracionService } from '../services/vibracion.service';
+
 
 @Component({
   standalone: true,
@@ -59,7 +63,8 @@ export class MapaPage implements OnInit, OnDestroy, AfterViewInit {
     public firebaseService: FirebaseDbService,
     private mapaBridge: MapaBridgeService,
     private ngZone: NgZone,
-    private modalCtrl: ModalController
+    private modalCtrl: ModalController,
+    private vibracion: VibracionService
   ) { }
 
   ngOnInit() {
@@ -106,6 +111,11 @@ crearBall(id: string, data: ball) {
     geometry: new Point(coordenadaBall),
   });
 
+  const esPropia = data.owner === this.firebaseService.authid;
+
+  // Colores: amarilla si es propia, roja si es de otro
+  const colorBall = esPropia ? '#ffff00' : '#ff0000';
+
   ballFeature.setStyle(new Style({
     image: new Icon({
       src: 'assets/icon/ball.png',
@@ -113,12 +123,14 @@ crearBall(id: string, data: ball) {
       anchor: [0.5, 1],
       anchorXUnits: 'fraction',
       anchorYUnits: 'fraction',
-      crossOrigin: 'anonymous'
+      crossOrigin: 'anonymous',
+      color: colorBall
     }),
   }));
 
   this.vectorSource.addFeature(ballFeature);
   this.ballsFeatures.set(id, ballFeature);
+
 }
 
 borrarBall(id: string) {
@@ -144,23 +156,50 @@ crearJugador(uid: string, jugador: jugador) {
     geometry: new Point(coord)
   });
 
-  const iconoUrl = this.getAvatarUrl(jugador.seteo.icono); // usa tu método
+  const iconoUrl = this.getAvatarUrl(jugador.seteo.icono);
+  const colorHex = (typeof jugador.seteo?.color === 'string')
+    ? jugador.seteo.color.toLowerCase()
+    : '#000000';
 
-  const color = jugador.seteo?.color;
-  const colorHex = (typeof color === 'string') ? color.toLowerCase() : '#000000';
+  const nick = jugador.seteo?.nick ?? 'SinNick';
+  const puntos = jugador.puntos ?? 0;
 
+  const iconScale = 0.06; // Ajustá según tamaño del ícono real
 
-  feature.setStyle(new Style({
+  // Estilo del ícono centrado
+  const estiloIcono = new Style({
     image: new Icon({
       src: iconoUrl,
-      scale: 0.08,
-      anchor: [0.5, 1],
+      scale: iconScale,
+      anchor: [0.5, 0.5], // Centrado total
       anchorXUnits: 'fraction',
       anchorYUnits: 'fraction',
-      crossOrigin: 'anonymous',
-      color: colorHex // Esto aplica un tinte si la imagen lo permite (transparentes)
+      crossOrigin: 'anonymous'
     }),
-  }));
+  });
+
+  // Estilo del círculo de color (borde tipo aura)
+  const estiloBorde = new Style({
+    image: new CircleStyle({
+      radius: 32, // Ajustá al tamaño del ícono (por fuera)
+      fill: new Fill({ color: 'rgba(0,0,0,0)' }), // Transparente, solo borde
+      stroke: new Stroke({ color: colorHex, width: 4 })
+    })
+  });
+
+  // Estilo del texto (nick y puntos)
+  const estiloTexto = new Style({
+    text: new Text({
+      text: `${nick} - ${puntos}`,
+      font: '12px sans-serif',
+      fill: new Fill({ color: '#000' }),
+      stroke: new Stroke({ color: '#fff', width: 2 }),
+      offsetY: -35, // Texto sobre el jugador
+    })
+  });
+
+  // Se aplican los tres estilos: borde, ícono, y texto
+  feature.setStyle([estiloBorde, estiloIcono, estiloTexto]);
 
   this.vectorSource.addFeature(feature);
   this.jugadoresFeatures.set(uid, feature);
@@ -177,14 +216,52 @@ borrarJugador(uid: string) {
   }
 }
 
-  actualizarSeteoJugador(uid: string, nuevoSeteo: jugador['seteo']) {
-    console.log("🎨 Seteo actualizado:", uid, nuevoSeteo);
-    const jugador = this.jugadoresEnMapa.get(uid);
-    if (jugador) {
-      jugador.seteo = nuevoSeteo;
-      this.jugadoresEnMapa.set(uid, jugador);
+actualizarSeteoJugador(uid: string, nuevoSeteo: jugador['seteo']) {
+  console.log("🎨 Seteo actualizado:", uid, nuevoSeteo);
+  const jugador = this.jugadoresEnMapa.get(uid);
+  if (jugador) {
+    jugador.seteo = nuevoSeteo;
+    this.jugadoresEnMapa.set(uid, jugador);
+
+    const feature = this.jugadoresFeatures.get(uid);
+    if (feature) {
+      const colorHex = (typeof nuevoSeteo.color === 'string') ? nuevoSeteo.color.toLowerCase() : '#000000';
+      const iconoUrl = this.getAvatarUrl(nuevoSeteo.icono);
+
+      // Actualizar estilos manteniendo texto
+      const estiloIcono = new Style({
+        image: new Icon({
+          src: iconoUrl,
+          scale: 0.06,
+          anchor: [0.5, 0.5],
+          anchorXUnits: 'fraction',
+          anchorYUnits: 'fraction',
+          crossOrigin: 'anonymous'
+        }),
+      });
+
+      const estiloBorde = new Style({
+        image: new CircleStyle({
+          radius: 32,
+          fill: new Fill({ color: 'rgba(0,0,0,0)' }),
+          stroke: new Stroke({ color: colorHex, width: 4 })
+        })
+      });
+
+      const estiloTexto = new Style({
+        text: new Text({
+          text: `${nuevoSeteo.nick ?? 'SinNick'} - ${jugador.puntos ?? 0}`,
+          font: '12px sans-serif',
+          fill: new Fill({ color: '#000' }),
+          stroke: new Stroke({ color: '#fff', width: 2 }),
+          offsetY: -35,
+        })
+      });
+
+      feature.setStyle([estiloBorde, estiloIcono, estiloTexto]);
     }
   }
+}
 
   actualizarPosJugador(uid: string, nuevaPos: jugador['pos']) {
     console.log("📍 Posición actualizada:", uid, nuevaPos);
@@ -201,14 +278,35 @@ borrarJugador(uid: string) {
     }
 }
 
-  actualizarPuntosJugador(uid: string, nuevosPuntos: number) {
-    console.log("⭐ Puntos actualizados:", uid, nuevosPuntos);
-    const jugador = this.jugadoresEnMapa.get(uid);
-    if (jugador) {
-      jugador.puntos = nuevosPuntos;
-      this.jugadoresEnMapa.set(uid, jugador);
+actualizarPuntosJugador(uid: string, nuevosPuntos: number) {
+  console.log("⭐ Puntos actualizados:", uid, nuevosPuntos);
+  const jugador = this.jugadoresEnMapa.get(uid);
+  if (jugador) {
+    jugador.puntos = nuevosPuntos;
+    this.jugadoresEnMapa.set(uid, jugador);
+
+    const feature = this.jugadoresFeatures.get(uid);
+    if (feature) {
+      const estiloActual = feature.getStyle() as Style | Style[];
+      if (Array.isArray(estiloActual)) {
+        // Actualizar el estilo de texto dentro del arreglo
+        estiloActual.forEach(estilo => {
+          const texto = estilo.getText();
+          if (texto) {
+            texto.setText(`${jugador.seteo.nick ?? 'SinNick'} - ${nuevosPuntos}`);
+          }
+        });
+        feature.setStyle(estiloActual);
+      } else {
+        const texto = estiloActual.getText();
+        if (texto) {
+          texto.setText(`${jugador.seteo.nick ?? 'SinNick'} - ${nuevosPuntos}`);
+          feature.setStyle(estiloActual);
+        }
+      }
     }
   }
+}
 
   ngAfterViewInit() {
     this.ngZone.runOutsideAngular(() => {
@@ -314,49 +412,6 @@ borrarJugador(uid: string) {
 
   }
 
-private actualizarBolasEnMapa() {
-  if (!this.mapa || !this.vectorSource) {
-    console.warn('Mapa o vectorSource no inicializado, no se pueden actualizar las bolas.');
-    return;
-  }
-
-  this.firebaseService.listaBalls.forEach((ball: ball, id: string) => {
-    // Verifica que 'lat', 'long' y 'owner' sean válidos
-    if (typeof ball.lat === 'number' && !isNaN(ball.lat) &&
-        typeof ball.long === 'number' && !isNaN(ball.long) &&
-        ball.owner && ball.owner !== '') {
-
-      const coordenadaBall = fromLonLat([ball.long, ball.lat]);
-
-      // Verifica si la bola ya existe
-      const existente = this.ballsFeatures.get(id);
-      if (existente) {
-        (existente.getGeometry() as Point).setCoordinates(coordenadaBall);
-        console.log(`✅ Bola ID: ${id} actualizada.`);
-      } else {
-        const ballFeature = new Feature({
-          geometry: new Point(coordenadaBall),
-        });
-        ballFeature.setStyle(new Style({
-          image: new Icon({
-            src: 'assets/icon/ball.png',
-            scale: 0.07,
-            anchor: [0.5, 1],
-            anchorXUnits: 'fraction',
-            anchorYUnits: 'fraction',
-            crossOrigin: 'anonymous'
-          }),
-        }));
-        this.vectorSource.addFeature(ballFeature);
-        this.ballsFeatures.set(id, ballFeature);
-        console.log(`✅ Bola ID: ${id} añadida.`);
-      }
-    } else {
-      console.warn(`⚠️ BALL inválida ignorada (ID: ${id}):`, ball);
-    }
-  });
-}
-
 
   iniciarActualizacionContinua() {
     if (!this.mapa) {
@@ -369,9 +424,7 @@ private actualizarBolasEnMapa() {
     this.actualizarPosicion(); // Llama una vez inmediatamente
 
     this.intervaloId = setInterval(() => {
-      this.actualizarPosicion();
-      this.verificarColisiones();
-
+      this.actualizarPosicion(); 
     }, 1000);
     console.log('Actualización de ubicación y bolas iniciada.');
   }
@@ -407,8 +460,12 @@ private actualizarBolasEnMapa() {
         // }
 
         this.firebaseService.crearBall(nuevaLat,nuevaLong);
-
-
+        this.verificarColisiones();
+      // CENTRAR EL MAPA EN LA NUEVA POSICIÓN DEL JUGADOR
+        if (this.mapa) {
+          const coordenadas = fromLonLat([nuevaLong, nuevaLat]);
+          this.mapa.getView().setCenter(coordenadas);
+        }
       }
     } catch (err: any) {
       this.error = 'Error al obtener la ubicación: ' + err.message;
@@ -445,21 +502,24 @@ private actualizarBolasEnMapa() {
   }
 
   verificarColisiones() {
-    if (!this.latitud || !this.longitud) return;
-
+    console.log('Verificando colisiones...');
+    if (!this.latitud || !this.longitud) {
+      console.log('Posición no definida aún');
+      return;
+    }
     this.firebaseService.listaBalls.forEach((ball, id) => {
-      // Aseguramos que lat, long y OWNER existan y sean números válidos para lat/long
+
+
+      console.log(`Revisando ball ${id} de owner ${ball.owner} y yo yosy ${this.firebaseService.authid}`);
       if (typeof ball.lat === 'number' && typeof ball.long === 'number' && ball.owner) {
         const distancia = this.calcularDistancia(this.latitud!, this.longitud!, ball.lat, ball.long);
-        const radioColisionMetros = 5;
-        if (distancia < radioColisionMetros && ball.owner !== this.firebaseService.authid) {
-          
-          // Si hay colisión, consumimos la bola
+        console.log(`Distancia a ball ${id}: ${distancia} metros`);
+        if (distancia < 5 && ball.owner !== this.firebaseService.authid) { 
+          console.log(`¡Consumir ball ${id}!`);
           this.ConsumirBall(id);
-
         }
       } else {
-        console.warn(`⚠️ BALL con ID ${id} tiene lat/long inválidos o falta OWNER para colisión:`, ball);
+        console.warn(`BALL inválida ID ${id}`, ball);
       }
     });
   }
@@ -475,7 +535,7 @@ private actualizarBolasEnMapa() {
 
       // Actualiza los puntos en la base de datos
       this.firebaseService.setPuntos(this.firebaseService.jugadorActual.puntos);
-
+      this.vibracion.vibrarLigero(); 
       // Log para debug
       console.log(`¡Colisión con BALL ${id},  Puntos: ${this.firebaseService.jugadorActual.puntos}`);
     }
